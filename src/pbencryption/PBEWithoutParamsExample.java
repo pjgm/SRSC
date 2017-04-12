@@ -1,4 +1,6 @@
-// Neste caso usa-se PBE sem parametros
+package pbencryption;// Neste caso usa-se PBE sem parametros
+
+import EncryptDecrypt.ex2.Utils;
 
 import java.security.Key;
 

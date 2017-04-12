@@ -1,0 +1,6 @@
+CIPHERSUITE:		 AES/ECB/PKCS5Padding
+KEYSIZE:             256
+KEYVALUE:            ffffffffffffffffffffffffffffffa1
+MAC:                 RC6-GMAC
+MACKEYSIZE:          256
+MACKEYVALUE:         0123456789

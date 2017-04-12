@@ -1,0 +1,6 @@
+CIPHERSUITE:		 <alg/mode/padding>		#	ex.,	AES/CBC/PKCS#5
+KEYSIZE:		 <valor> #	n.	de	bits	da	chave,	ex:	256
+KEYVALUE:	 <valor> #	chave,	representada	em	hexadecimal
+MAC:	 <mac-alg> #	algoritmo	MAC	(HMAC	ou	CMAC),	por	ex:	RC6-GMAC
+MACKEYSIZE: <valor> #	n.	de	bits	da	chave	do	MAC,	ex:	256
+MACKEYVALUE:	 <valor> #	chave	MAC,	representada	em	hexadecimal
