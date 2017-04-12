@@ -1,0 +1,27 @@
+keytool: 
+Ferramenta JAVA (linha de comando) para gerar chaves para keystores normlizadas
+No caso de criptografai simetrica, as keystores são objetos persistentes que
+para guardarem chaves simetricas devem ser do tipo jceks
+--------------------------------------------------------------------
+Exemplo de uso:
+// Gerar chave simetrica AES, de 128 bits e guardar numa keystore JCEKS
+// que fica num ficheiro chamado mykeystore.jks
+
+keytool -genseckey -alias mykey1 -keyalg AES -keysize 128 -storetype jceks -keystore mykeystore.jks
+keytool -genseckey -alias mykey2 -keyalg Blowfish -keysize 448 -storetype jceks -keystore mykeystore.jks
+
+// As keystores armazenam as chaves em "entries", como um key-value store
+// local, em que cada entry contem uma chave, indexada por um identificador
+// na entry
+// Ver por exmplo o conteudo da keystore:
+
+keytool -list -keystore mykeystore.jks -storetype jceks
+
+// A patir deste processo normalziado de gestão de chaves em keystores
+// como chaveiros de chaves simetricas, sera facil ter programas
+// Java com uma estrutura normalizada para acesso e gestao das
+// chaves que vao usar.
+
+Ver codigo exemplificativo sobre utilizacao de keystores
+
+

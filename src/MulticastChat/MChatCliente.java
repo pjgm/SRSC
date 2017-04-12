@@ -1,3 +1,4 @@
+/*
 package MulticastChat;// MChatCliente.java
 // 
 
@@ -132,25 +133,31 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 			});
 	}
 	
-	/**
+	*/
+/**
 	 * Adiciona utilizador no interface do utilizador
-	 */
+	 *//*
+
 	protected void uiAddUser( String userName) {
 		users.addElement( userName);
 	}
 	
-	/**
+	*/
+/**
 	 * Remove utilizador no interface do utilizador.
 	 * @return Devolve true se utilizador foi removido.
-	 */
+	 *//*
+
 	protected boolean uiRemUser( String userName) {
 		return users.removeElement( userName);
 	}
 	
-	/**
+	*/
+/**
 	 * Inicializa lista de utilizadores a partir de um iterador -- pode ser usado
 	 * obtendo iterador de qualquer estrutura de dados de java
-	 */
+	 *//*
+
 	protected void uiInitUsers( Iterator it) {
 		users.clear();
 		if( it != null)
@@ -159,9 +166,11 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 			}
 	}
 	
-	/**
+	*/
+/**
 	 * Devolve um Enumeration com o nome dos utilizadores que aparecem no UI.
-	 */
+	 *//*
+
 	protected Enumeration uiListUsers() {
 		return users.elements();
 	}
@@ -188,11 +197,13 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 			});
 	} 
 
-	/**
+	*/
+/**
 	 * Envia mensagem. Chamado quando se carrega no botao de SEND ou se faz ENTER 
 	 * na linha da mensagem. 
 	 * Executa operacoes relacionadas com interface -- nao modificar
-	 */
+	 *//*
+
 	protected void sendMessage() {
 		String message = messageField.getText();
 		messageField.setText("");
@@ -200,9 +211,11 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 		messageField.requestFocus();
 	}
 
-	/**
+	*/
+/**
 	 * Executa operacoes relativas ao envio de mensagens
-	 */
+	 *//*
+
 	protected void doSendMessage( String message) {
 		try {
 			chat.sendMessage(message);
@@ -215,9 +228,11 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 	}
 	
 	
-	/**
+	*/
+/**
 	 * Imprime mensagem de erro
-	 */
+	 *//*
+
 	protected void displayMsg( final String str, final boolean error) {
 		final JFrame f = this;
 
@@ -231,11 +246,13 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 			});
 	}
 
-	/**
+	*/
+/**
 	 * Pede downlaod dum ficheiro. Chamado quando se carrega no botao de SEND ou se faz ENTER 
 	 * na linha de download. 
 	 * Executa operacoes relacionadas com interface -- nao modificar
-	 */
+	 *//*
+
 	protected void downloadFile() {
 		final String file = fileField.getText();
 		fileField.setText("");
@@ -247,20 +264,24 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 		messageField.requestFocus();
 	}
 
-	/**
+	*/
+/**
 	 * Executa operacoes relativas ao envio de mensagens.
 	 * 
 	 * NOTA: Qualquer informacao ao utilizador deve ser efectuada usando 
 	 * o metodo "displayMsg".
-	 */
+	 *//*
+
 	protected void doDownloadFile( String file) {
 		// TODO: a completar
 		System.err.println( "Pedido download do ficheiro " + file);
 	}
 
-	/**
+	*/
+/**
 	 * Chamado quando o utilizador fechou a janela do chat
-	 */
+	 *//*
+
 	protected void onQuit() {
 		try {
 			if (chat != null) {
@@ -352,3 +373,4 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 		} 
 	} 
 }
+*/

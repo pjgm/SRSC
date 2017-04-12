@@ -1,3 +1,4 @@
+/*
 package MulticastChat;// MulticastChatEventListener.java
 
 import java.net.InetAddress;
@@ -15,3 +16,4 @@ public interface MulticastChatEventListener
   // Invoked when a multicast participant has left
   void chatParticipantLeft(String username, InetAddress host, int port);
 }
+*/

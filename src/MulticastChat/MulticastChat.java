@@ -1,3 +1,4 @@
+/*
 package MulticastChat;// MulticastChat.java
 // Objecto que representa um chat Multicast
 
@@ -61,10 +62,12 @@ public class MulticastChat extends Thread {
     sendJoin();
   }
 
-  /**
+  */
+/**
    * Request de terminacao assincrona da thread de execucao,
    * e envio de uma mensagem de LEAVE
-   */
+   *//*
+
 
   public void terminate() throws IOException {
     isActive = false;
@@ -208,10 +211,12 @@ public class MulticastChat extends Thread {
 
       } catch (InterruptedIOException e) {
 
-        /**
+        */
+/**
          * O timeout e usado apenas para forcar um loopback e testar
 		 * o valor isActive 
-         */
+         *//*
+
 	 
 	 
       } catch (Throwable e) {
@@ -225,3 +230,4 @@ public class MulticastChat extends Thread {
     } catch (Throwable e) {}
   } 
 }
+*/

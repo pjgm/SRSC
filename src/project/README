@@ -1,0 +1,31 @@
+// SRSC 1617
+// Como usar o multicast CHAT ?
+
+Correr simplesmente ...
+
+java -Djava.net.preferIPv4Stack=true MChatCliente nickname mcast-addr porto
+
+nickname:   O nickname do utilizador (ex., hj)
+
+mcast-addr: O endereco multicast do chat em grupo, ex: 224.10.10.10 ou
+            qq endereco no range multicast (224.0.0.1 a 239.255.255.255)
+            isto, claro, sendo IPV4
+            Este endereço fincionará tb como idntificador da sala de CHAT
+            (CHAT room)
+
+porto:      Porto a usar, ex: 9000 (porto UDP)
+
+// Atenção: no caso de computadores e instalações dual-stack IPV4 e IPV6
+// mapeadas e ativas na mesma interface física (ethernet) e que podem
+// tender a usar IPV6 by default para modo multicast, será necessário
+// forçar o uso de Multicast na stack IPV4 para usar os endereços IPV4
+// na gama Multicast addressing: 224.0.0.1 ..... 239.255.255.255
+// Evitar 224.0.0.1 que funciona como loopback multicast localhost
+
+Como forcar o uso da stack IPV4?
+Correr o interpretador/JMV com a seguinte property
+(Nota: esta propriedade pode estar tb definida pelo próprio programa)
+
+       -Djava.net.preferIPv4Stack=true
+       para prevenir que esta mesmo a usar o stack IPV4 quando o
+       o default seja IPV6 ...
