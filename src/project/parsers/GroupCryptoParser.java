@@ -1,6 +1,5 @@
 package project.parsers;
 
-import ExerciciosMAC.Utils;
 import project.config.GroupCryptoConfig;
 
 import javax.crypto.spec.SecretKeySpec;

@@ -1,5 +1,5 @@
-CIPHERSUITE:		 AES/ECB/PKCS5Padding
-KEYSIZE:             256
+CIPHERSUITE:		 AES/CBC/PKCS7Padding
+KEYSIZE:             192
 KEYVALUE:            ffffffffffffffffffffffffffffffa1
 MAC:                 RC6-GMAC
 MACKEYSIZE:          256

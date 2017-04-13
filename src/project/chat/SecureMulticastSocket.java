@@ -6,66 +6,79 @@ import project.parsers.GroupCryptoParser;
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.spec.InvalidParameterSpecException;
 
 
-public class SecureMulticastSocket extends MulticastSocket{
+public class SecureMulticastSocket extends MulticastSocket {
 
     Cipher cipher;
     GroupCryptoConfig config;
 
-    byte[] ivBytes= new byte[] {
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-            0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15
-    };
-    IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    int ctLength;
-
-    public SecureMulticastSocket(int port, String configPath) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException {
+    public SecureMulticastSocket(int port, String configPath) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidParameterSpecException {
         super(port);
-
         GroupCryptoParser parser = new GroupCryptoParser(configPath);
         config = parser.parseFile();
         cipher = Cipher.getInstance(config.getCipherSuite());
-
     }
-
-
-    // CTR mode working
 
     @Override
     public void send (DatagramPacket packet) {
         try {
-            cipher.init(Cipher.ENCRYPT_MODE, config.getSymmetricKeyValue());
+            cipher.init(Cipher.ENCRYPT_MODE, config.getSymmetricKeyValue()); // IV is generated when one is needed
             byte input[] = packet.getData();
             byte[] cipherText = new byte[cipher.getOutputSize(input.length)];
-            ctLength = cipher.update(input, 0, input.length, cipherText, 0);
+            int ctLength = cipher.update(input, 0, input.length, cipherText, 0);
             ctLength += cipher.doFinal(cipherText, ctLength);
-            packet.setData(cipherText);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+            oos.writeInt(ctLength);
+            oos.write(cipherText);
+            oos.close();
+
+            packet.setData(baos.toByteArray());
             super.send(packet);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
+        }
+        catch (GeneralSecurityException | IOException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
     public void receive (DatagramPacket packet) throws IOException {
-        super.receive(packet);
         try {
-            cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue());
-            byte cipherText[] = packet.getData();
+            super.receive(packet);
+
+            ByteArrayInputStream bin = new ByteArrayInputStream(packet.getData());
+            ObjectInputStream ois = new ObjectInputStream(bin);
+
+            int ctLength = ois.readInt();
+            byte[] cipherText = new byte[ctLength];
+            ois.read(cipherText);
+            ois.close();
+
+            if (needsIV())
+                cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue(), new IvParameterSpec(cipher.getIV()));
+            else
+                cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue());
+
             byte[] plainText = new byte[cipher.getOutputSize(ctLength)];
             int ptLength = cipher.update(cipherText, 0, ctLength, plainText, 0);
             ptLength += cipher.doFinal(plainText, ptLength);
             packet.setData(plainText);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
+        }
+        catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
+    }
+
+
+    private boolean needsIV() {
+        return !config.getMode().equals("ECB");
     }
 }

@@ -7,6 +7,7 @@ import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.*;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidParameterSpecException;
 
 public class MulticastChat extends Thread {
 
@@ -60,6 +61,8 @@ public class MulticastChat extends Thread {
     } catch (NoSuchPaddingException e) {
       e.printStackTrace();
     } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    } catch (InvalidParameterSpecException e) {
       e.printStackTrace();
     }
     msocket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT_MILLIS);
