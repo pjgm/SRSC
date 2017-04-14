@@ -23,8 +23,7 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class PBEWithParamsExample
 {
-    public static void main(
-        String[]    args)
+    public static void main(String[] args)
         throws Exception
     {
         byte[]          input = new byte[] { 
@@ -49,9 +48,7 @@ public class PBEWithParamsExample
 	// Cipher cEnc = Cipher.getInstance("DESede/CBC/PKCS7Padding", "BC");
         Cipher cEnc = Cipher.getInstance("DESede/CBC/PKCS7Padding", "BC");
 
-        cEnc.init(Cipher.ENCRYPT_MODE,
-            new SecretKeySpec(keyBytes, "DESede"),
-            new IvParameterSpec(ivBytes));
+        cEnc.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(keyBytes, "DESede"), new IvParameterSpec(ivBytes));
 
         byte[] out = cEnc.doFinal(input);
        

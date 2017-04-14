@@ -51,7 +51,6 @@ public class SecureMulticastSocket extends MulticastSocket {
             byte[] input = packet.getData();
             byte[] nonce = generateNonce();
 
-
             cipher.init(Cipher.ENCRYPT_MODE, config.getSymmetricKeyValue()); // IV is generated when one is needed
             byte[] cipherText = new byte[cipher.getOutputSize(input.length + nonce.length)];
             int ctLength = cipher.update(input, 0, input.length, cipherText, 0);

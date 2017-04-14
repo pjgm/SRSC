@@ -3,6 +3,7 @@ package pbencryption;// Neste caso usa-se PBE sem parametros
 import EncryptDecrypt.ex2.Utils;
 
 import java.security.Key;
+import java.security.spec.AlgorithmParameterSpec;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
@@ -40,9 +41,8 @@ public class PBEWithoutParamsExample
 	Cipher cEnc = Cipher.getInstance("DESede/CBC/PKCS7Padding","BC");
 
 
-        cEnc.init(Cipher.ENCRYPT_MODE,
-            new SecretKeySpec(keyBytes, "DESede"),
-            new IvParameterSpec(ivBytes));
+        cEnc.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(keyBytes, "DESede"), new IvParameterSpec(ivBytes));
+
 
         byte[] out = cEnc.doFinal(input);
 

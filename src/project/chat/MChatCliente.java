@@ -5,19 +5,18 @@ import project.config.PBEConfig;
 import project.parsers.PBEConfigParser;
 import project.pbe.PBEncryption;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.awt.*;
-import java.awt.event.*;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.swing.*;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.util.*;
+import java.security.GeneralSecurityException;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Scanner;
 
 // Interface para a sessao de chat swing-based
 // e pode ir sendo melhorada pelos alunos para acomodar as
@@ -352,29 +351,17 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 
 		Scanner scanner = new Scanner(System.in);
 		System.out.print("Please enter your password to decrypt the " + args[1] + ".crypto configuration file: ");
-		String password = scanner.nextLine();
+		//String password = scanner.nextLine();
+        String password = "teste";
 
 		PBEConfigParser parser = new PBEConfigParser("src/project/cfgfiles/" + args[1] + ".pbe");
 		PBEConfig config = parser.parseFile();
 
         try {
-            PBEncryption pbe = new PBEncryption(password, "src/project/cfgfiles/224.0.0.2.crypto", config);
+            PBEncryption pbe = new PBEncryption(password, "224.0.0.2", config);
             pbe.encryptFile();
-            pbe = new PBEncryption(password, "src/project/cfgfiles/test", config);
             pbe.decryptFile();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
+        } catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
 
