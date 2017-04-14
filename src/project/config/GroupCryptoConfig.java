@@ -12,6 +12,7 @@ public class GroupCryptoConfig {
     private String macAlgorithm;
     private int macKeySize;
     private SecretKeySpec macKeyValue; //change type later
+    private int nonceSize;
 
 
     public GroupCryptoConfig() {
@@ -84,5 +85,13 @@ public class GroupCryptoConfig {
 
     public void setMacKeyValue(SecretKeySpec macKeyValue) {
         this.macKeyValue = macKeyValue;
+    }
+
+    public int getNonceSize() {
+        return nonceSize;
+    }
+
+    public void setNonceSize(int nonceSize) {
+        this.nonceSize = nonceSize;
     }
 }

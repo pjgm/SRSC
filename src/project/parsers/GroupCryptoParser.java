@@ -53,11 +53,16 @@ public class GroupCryptoParser {
             case "mackeyvalue":
                 parseMacKeyValue(value);
                 break;
+            case "noncesize":
+                parseNonceSize(value);
         }
     }
 
+    private void parseNonceSize(String value) {
+        config.setNonceSize(Integer.parseInt(value)/8);
+    }
+
     private void parseMacKeyValue(String value) {
-        System.out.println(value);
         byte[] keyBytes = hexStringToByteArray(value);
         config.setMacKeyValue(new SecretKeySpec(keyBytes, config.getMacAlgorithm()));
     }
@@ -76,8 +81,8 @@ public class GroupCryptoParser {
     }
 
     private void parseSymmetricKeySize(String value) {
-        int keysize = Integer.parseInt(value);
-        config.setSymmetricKeySize(keysize);
+        int keySize = Integer.parseInt(value);
+        config.setSymmetricKeySize(keySize);
     }
 
     private void parseCipherSuite(String value) {

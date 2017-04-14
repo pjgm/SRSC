@@ -1,6 +1,7 @@
 CIPHERSUITE:		 AES/CBC/PKCS7Padding
-KEYSIZE:             192
+KEYSIZE:             256
 KEYVALUE:            ffffffffffffffffffffffffffffffa1
-MAC:                 RC6-GMAC
+MAC:                 HMacSHA1
 MACKEYSIZE:          256
-MACKEYVALUE:         0123456789
+MACKEYVALUE:         ffffffffffffffffffffffffffffffa1
+NONCESIZE:           128

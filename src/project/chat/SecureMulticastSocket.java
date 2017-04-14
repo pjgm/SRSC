@@ -1,42 +1,70 @@
 package project.chat;
 
 import project.config.GroupCryptoConfig;
+import project.container.SecureContainer;
+import project.exceptions.CorruptedMessageException;
+import project.exceptions.DuplicateMessageException;
 import project.parsers.GroupCryptoParser;
 
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
-import java.security.*;
+import java.nio.ByteBuffer;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidParameterSpecException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class SecureMulticastSocket extends MulticastSocket {
 
-    Cipher cipher;
-    GroupCryptoConfig config;
+    private Cipher cipher;
+    private Mac mac;
+    private GroupCryptoConfig config;
+    private Set<ByteBuffer> nonceSet;
+    private static final int VERSION = 1;
+    private static final int LAYOUT = 1;
 
-    public SecureMulticastSocket(int port, String configPath) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidParameterSpecException {
+
+
+    SecureMulticastSocket(int port, String configPath) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidParameterSpecException {
         super(port);
         GroupCryptoParser parser = new GroupCryptoParser(configPath);
         config = parser.parseFile();
         cipher = Cipher.getInstance(config.getCipherSuite());
+        mac = Mac.getInstance(config.getMacAlgorithm());
+        nonceSet = new HashSet<>();
     }
 
     @Override
     public void send (DatagramPacket packet) {
         try {
+
+            byte[] input = packet.getData();
+            byte[] nonce = generateNonce();
+
             cipher.init(Cipher.ENCRYPT_MODE, config.getSymmetricKeyValue()); // IV is generated when one is needed
-            byte input[] = packet.getData();
-            byte[] cipherText = new byte[cipher.getOutputSize(input.length)];
+            byte[] cipherText = new byte[cipher.getOutputSize(input.length + nonce.length)];
             int ctLength = cipher.update(input, 0, input.length, cipherText, 0);
-            ctLength += cipher.doFinal(cipherText, ctLength);
+            ctLength += cipher.doFinal(nonce, 0 , nonce.length, cipherText, ctLength);
+
+            mac.init(config.getMacKeyValue());
+            byte[] macBytes = mac.doFinal(cipherText);
+
+            SecureContainer container = new SecureContainer(VERSION, LAYOUT, ctLength, cipherText, macBytes, nonce);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
 
+            oos.writeObject(container);
             oos.writeInt(ctLength);
             oos.write(cipherText);
             oos.close();
@@ -57,10 +85,16 @@ public class SecureMulticastSocket extends MulticastSocket {
             ByteArrayInputStream bin = new ByteArrayInputStream(packet.getData());
             ObjectInputStream ois = new ObjectInputStream(bin);
 
-            int ctLength = ois.readInt();
-            byte[] cipherText = new byte[ctLength];
-            ois.read(cipherText);
+            SecureContainer container = (SecureContainer) ois.readObject();
             ois.close();
+            int ctLength = container.getPayloadSize();
+            byte[] cipherText = container.getPayload();
+
+            mac.init(config.getMacKeyValue());
+            byte[] macBytes = mac.doFinal(cipherText);
+
+            if (!MessageDigest.isEqual(macBytes, container.getMAC()))
+                throw new CorruptedMessageException("Message was corrupted or tampered with");
 
             if (needsIV())
                 cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue(), new IvParameterSpec(cipher.getIV()));
@@ -70,15 +104,30 @@ public class SecureMulticastSocket extends MulticastSocket {
             byte[] plainText = new byte[cipher.getOutputSize(ctLength)];
             int ptLength = cipher.update(cipherText, 0, ctLength, plainText, 0);
             ptLength += cipher.doFinal(plainText, ptLength);
+            byte[] nonce = Arrays.copyOfRange(plainText, ptLength - config.getNonceSize(), ptLength);
+
+            if (nonceSet.contains(ByteBuffer.wrap(nonce)))
+                throw new DuplicateMessageException("Duplicate message. Possible replaying attack.");
+
+            nonceSet.add(ByteBuffer.wrap(nonce));
+
             packet.setData(plainText);
-        }
-        catch (GeneralSecurityException e) {
+
+        } catch (GeneralSecurityException | ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (DuplicateMessageException | CorruptedMessageException e) {
+            System.err.println(e.getMessage());
         }
     }
 
-
     private boolean needsIV() {
         return !config.getMode().equals("ECB");
+    }
+
+    private byte[] generateNonce() {
+        SecureRandom r = new SecureRandom();
+        byte [] nonce = new byte[config.getNonceSize()];
+        r.nextBytes(nonce);
+        return nonce;
     }
 }
