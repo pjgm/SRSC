@@ -351,8 +351,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 
 		Scanner scanner = new Scanner(System.in);
 		System.out.print("Please enter your password to decrypt the " + args[1] + ".crypto configuration file: ");
-		//String password = scanner.nextLine();
-        String password = "teste";
+		String password = scanner.nextLine();
 
 		PBEConfigParser parser = new PBEConfigParser("src/project/cfgfiles/" + args[1] + ".pbe");
 		PBEConfig config = parser.parseFile();

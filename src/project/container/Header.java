@@ -14,14 +14,6 @@ class Header implements Serializable {
         this.payloadSize = payloadSize;
     }
 
-    int getVersion() {
-        return version;
-    }
-
-    int getLayout() {
-        return layout;
-    }
-
     int getPayloadSize() {
         return payloadSize;
     }

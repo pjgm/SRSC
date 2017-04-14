@@ -64,6 +64,8 @@ public class GroupConfigParser {
 
     private void parseMacKeyValue(String value) {
         byte[] keyBytes = hexStringToByteArray(value);
+        if (keyBytes.length != config.getMacKeySize())
+            throw new RuntimeException("Declared key length doesn't match lenght of key value in the config file");
         config.setMacKeyValue(new SecretKeySpec(keyBytes, config.getMacAlgorithm()));
     }
 
@@ -77,6 +79,8 @@ public class GroupConfigParser {
 
     private void parseSymmetricKeyValue(String value) {
         byte[] keyBytes = hexStringToByteArray(value);
+        if (keyBytes.length != config.getSymmetricKeySize())
+            throw new RuntimeException("Declared key length doesn't match lenght of key value in the config file");
         config.setSymmetricKeyValue(new SecretKeySpec(keyBytes, config.getSymmetricAlgorithm()));
     }
 

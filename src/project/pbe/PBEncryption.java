@@ -20,8 +20,6 @@ public class PBEncryption {
 
     private static String CFGPATH = "src/project/cfgfiles/";
     private Cipher c;
-    private PBEKeySpec pbeSpec;
-    private SecretKeyFactory keyFactory;
     private Key key;
     private PBEConfig config;
     private String file;
@@ -29,10 +27,10 @@ public class PBEncryption {
     public PBEncryption(String password, String file, PBEConfig config) throws NoSuchAlgorithmException,
             InvalidKeySpecException, NoSuchPaddingException {
         this.c = Cipher.getInstance(config.getAlgorithm());
-        this.pbeSpec = new PBEKeySpec(password.toCharArray());
+        PBEKeySpec pbeSpec = new PBEKeySpec(password.toCharArray());
         this.file = file;
         this.config = config;
-        this.keyFactory = SecretKeyFactory.getInstance(config.getAlgorithm());
+        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(config.getAlgorithm());
         this.key = keyFactory.generateSecret(pbeSpec);
     }
 

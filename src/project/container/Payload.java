@@ -6,12 +6,10 @@ class Payload implements Serializable {
 
     private byte[] data;
     private byte[] mac;
-    private byte[] nonce;
 
-    Payload(byte[] data, byte[] mac, byte[] nonce) {
+    Payload(byte[] data, byte[] mac) {
         this.data = data;
         this.mac = mac;
-        this.nonce = nonce;
     }
 
     byte[] getData() {
@@ -20,9 +18,5 @@ class Payload implements Serializable {
 
     byte[] getMAC() {
         return mac;
-    }
-
-    byte[] getNonce() {
-        return nonce;
     }
 }

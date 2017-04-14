@@ -1,7 +1,5 @@
 package project.config;
 
-import javax.crypto.spec.SecretKeySpec;
-
 public class PBEConfig {
 
     private String algorithm;

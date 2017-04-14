@@ -7,17 +7,9 @@ public class SecureContainer implements Serializable {
     private Header header;
     private Payload payload;
 
-    public SecureContainer(int version, int layout, int payloadSize, byte[] payload, byte[] mac, byte[] nonce) {
+    public SecureContainer(int version, int layout, int payloadSize, byte[] payload, byte[] mac) {
         this.header = new Header(version, layout, payloadSize);
-        this.payload = new Payload(payload, mac, nonce);
-    }
-
-    public int getHeaderVersion() {
-        return header.getVersion();
-    }
-
-    public int getHeaderLayout() {
-        return header.getLayout();
+        this.payload = new Payload(payload, mac);
     }
 
     public int getPayloadSize() {
@@ -32,7 +24,4 @@ public class SecureContainer implements Serializable {
         return payload.getMAC();
     }
 
-    public byte[] getNonce() {
-        return payload.getNonce();
-    }
 }

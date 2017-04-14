@@ -59,7 +59,7 @@ public class SecureMulticastSocket extends MulticastSocket {
             mac.init(config.getMacKeyValue());
             byte[] macBytes = mac.doFinal(cipherText);
 
-            SecureContainer container = new SecureContainer(VERSION, LAYOUT, ctLength, cipherText, macBytes, nonce);
+            SecureContainer container = new SecureContainer(VERSION, LAYOUT, ctLength, cipherText, macBytes);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);

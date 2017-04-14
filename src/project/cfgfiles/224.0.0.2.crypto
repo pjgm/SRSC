@@ -49,6 +49,6 @@ KEYVALUE:      ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
 #KEYVALUE:       ffffffffffffffffffffffffffffffff
 #KEYVALUE:       ffffffffffffffff
 MAC:            HMacSHA1
-MACKEYSIZE:     256
+MACKEYSIZE:     128
 MACKEYVALUE:    ffffffffffffffffffffffffffffffa1
 NONCESIZE:      128
