@@ -1,23 +1,15 @@
 package test;
 
-
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.security.Provider;
-import java.security.Security;
+import java.net.*;
 
 public class TestingClient {
 
-    public static void main(String args[]) {
-        for (Provider provider: Security.getProviders()) {
-            System.out.println(provider.getName());
-            for (Provider.Service s: provider.getServices()){
-                if (s.getType().equals("Cipher"))
-                    System.out.println("\t"+s.getType()+" "+ s.getAlgorithm());
-            }
-        }
-
+    public static void main(String args[]) throws IOException {
+        DatagramSocket socket = new DatagramSocket();
+        String s = "sup bitches";
+        InetAddress addr = InetAddress.getByName("localhost");
+        DatagramPacket packet = new DatagramPacket(s.getBytes(), s.length(), addr, 8888);
+        socket.send(packet);
     }
 }

@@ -65,8 +65,6 @@ public class SecureMulticastSocket extends MulticastSocket {
             ObjectOutputStream oos = new ObjectOutputStream(baos);
 
             oos.writeObject(container);
-            oos.writeInt(ctLength);
-            oos.write(cipherText);
             oos.close();
 
             packet.setData(baos.toByteArray());

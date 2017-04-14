@@ -2,21 +2,17 @@ package test;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 public class TestingServer {
 
-    public static void main(String args[]) {
-        try {
-            MulticastSocket socket = new MulticastSocket(9000);
-            byte msg[] = "ola teste1233".getBytes();
-            DatagramPacket packet = new DatagramPacket(msg, msg.length, InetAddress.getByName("localhost"), 9000);
-            socket.send(packet);
-            socket.receive(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+    public static void main(String args[]) throws IOException {
+        DatagramSocket socket = new DatagramSocket(8888);
+        byte[] buffer = new byte[1024];
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        socket.receive(packet);
+        System.out.println(new String(packet.getData(), 0 , packet.getLength()));
     }
 }
