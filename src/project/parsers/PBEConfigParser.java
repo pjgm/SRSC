@@ -1,22 +1,22 @@
 package project.parsers;
 
-import project.config.PBECryptoConfig;
+import project.config.PBEConfig;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class PBECryptoParser {
+public class PBEConfigParser {
 
     private String path;
-    private PBECryptoConfig config;
+    private PBEConfig config;
 
-    public PBECryptoParser(String path) {
+    public PBEConfigParser(String path) {
         this.path = path;
-        this.config = new PBECryptoConfig();
+        this.config = new PBEConfig();
     }
 
-    public PBECryptoConfig parseFile() throws IOException {
+    public PBEConfig parseFile() throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(path));
         String line;
 
@@ -36,10 +36,13 @@ public class PBECryptoParser {
         switch (field) {
             case "pbe":
                 parsePBEAlgorithm(value);
+                break;
             case "salt":
                 parseSalt(value);
+                break;
             case "ctr":
                 parseIterationCount(value);
+                break;
         }
     }
 

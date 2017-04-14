@@ -1,0 +1,3 @@
+PBE:    PBEWITHSHA256AND192BITAES-CBC-BC
+SALT:   ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
+CTR:    2048

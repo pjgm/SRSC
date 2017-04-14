@@ -1,23 +1,23 @@
 package project.parsers;
 
-import project.config.GroupCryptoConfig;
+import project.config.GroupConfig;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class GroupCryptoParser {
+public class GroupConfigParser {
 
-    private GroupCryptoConfig config;
+    private GroupConfig config;
     private String path;
 
-    public GroupCryptoParser(String path) {
+    public GroupConfigParser(String path) {
         this.path = path;
-        config = new GroupCryptoConfig();
+        config = new GroupConfig();
     }
 
-    public GroupCryptoConfig parseFile() throws IOException {
+    public GroupConfig parseFile() throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(path));
         String line;
 
@@ -68,7 +68,7 @@ public class GroupCryptoParser {
     }
 
     private void parseMacKeySize(String value) {
-        config.setMacKeySize(Integer.parseInt(value));
+        config.setMacKeySize(Integer.parseInt(value)/8);
     }
 
     private void parseMacAlgorithm(String value) {
@@ -81,7 +81,7 @@ public class GroupCryptoParser {
     }
 
     private void parseSymmetricKeySize(String value) {
-        int keySize = Integer.parseInt(value);
+        int keySize = Integer.parseInt(value)/8;
         config.setSymmetricKeySize(keySize);
     }
 

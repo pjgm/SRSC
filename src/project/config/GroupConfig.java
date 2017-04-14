@@ -2,7 +2,7 @@ package project.config;
 
 import javax.crypto.spec.SecretKeySpec;
 
-public class GroupCryptoConfig {
+public class GroupConfig {
 
     private String symmetricAlgorithm;
     private String mode;
@@ -15,7 +15,7 @@ public class GroupCryptoConfig {
     private int nonceSize;
 
 
-    public GroupCryptoConfig() {
+    public GroupConfig() {
 
     }
 

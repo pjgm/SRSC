@@ -1,4 +1,4 @@
-
+package pbencryption;
 // Este programa mostra a utilizacao um esquema usual com chave
 // pre-calculada (ou ja existente) para cifrar
 // dados usando depois PBE para decifrar esses dados. A password usada 
@@ -6,6 +6,8 @@
 // convertida para uma chave de facto com SecretKeyFactory. O salt e
 // o iterador sao passados com a chave pre-processada com PBEParameterSpec
 
+
+import EncryptDecrypt.ex2.Utils;
 
 import java.security.Key;
 

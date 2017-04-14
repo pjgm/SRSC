@@ -1,11 +1,22 @@
 package project.chat;// MChatCliente.java
 // 
 
+import project.config.PBEConfig;
+import project.parsers.PBEConfigParser;
+import project.pbe.PBEncryption;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.awt.*;
 import java.awt.event.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.swing.*;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
 // Interface para a sessao de chat swing-based
@@ -296,7 +307,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 	} 
 
 	// Command-line invocation expecting three arguments
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		if ((args.length != 3) && (args.length != 4)) {
 			System.err.println("Utilizar: MChatCliente " 
 							   + "<nickusername> <grupo IPMulticast> <porto> { <ttl> }");
@@ -337,9 +348,38 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 				System.err.println("TTL invalido: " + args[3]);
 				System.exit(1); 
 			} 
-		} 
+		}
 
-		try {
+		Scanner scanner = new Scanner(System.in);
+		System.out.print("Please enter your password to decrypt the " + args[1] + ".crypto configuration file: ");
+		String password = scanner.nextLine();
+
+		PBEConfigParser parser = new PBEConfigParser("src/project/cfgfiles/" + args[1] + ".pbe");
+		PBEConfig config = parser.parseFile();
+
+        try {
+            PBEncryption pbe = new PBEncryption(password, "src/project/cfgfiles/224.0.0.2.crypto", config);
+            pbe.encryptFile();
+            pbe = new PBEncryption(password, "src/project/cfgfiles/test", config);
+            pbe.decryptFile();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+
+
+        try {
 			MChatCliente frame = new MChatCliente();
 			frame.setSize(800, 300);
 			frame.setVisible( true);

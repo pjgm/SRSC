@@ -1,0 +1,4 @@
+#	Definição	do	esquema	PBE	para	a	sala
+PBE:	 <algoritmo>	 #	ex:	PBEWithHmacSHA256AndAES_256
+SALT: <valor	do	salt> # Valor em	hexadecimal,	ex:	0x01	0x02	0x03	0x04	...	etc
+CTR:				<valor	do	counter>				 #	Representado	como	valor	inteiro

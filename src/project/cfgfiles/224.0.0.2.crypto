@@ -1,7 +1,8 @@
-CIPHERSUITE:		 AES/CBC/PKCS7Padding
-KEYSIZE:             256
-KEYVALUE:            ffffffffffffffffffffffffffffffa1
-MAC:                 HMacSHA1
-MACKEYSIZE:          256
-MACKEYVALUE:         ffffffffffffffffffffffffffffffa1
-NONCESIZE:           128
+CIPHERSUITE:    IDEA/CTR/NoPadding
+KEYSIZE:        256
+#KEYVALUE:      ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
+KEYVALUE:       ffffffffffffffffffffffffffffffff
+MAC:            HMacSHA1
+MACKEYSIZE:     256
+MACKEYVALUE:    ffffffffffffffffffffffffffffffa1
+NONCESIZE:      128

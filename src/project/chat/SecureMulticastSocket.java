@@ -1,10 +1,10 @@
 package project.chat;
 
-import project.config.GroupCryptoConfig;
+import project.config.GroupConfig;
 import project.container.SecureContainer;
 import project.exceptions.CorruptedMessageException;
 import project.exceptions.DuplicateMessageException;
-import project.parsers.GroupCryptoParser;
+import project.parsers.GroupConfigParser;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -28,7 +28,7 @@ public class SecureMulticastSocket extends MulticastSocket {
 
     private Cipher cipher;
     private Mac mac;
-    private GroupCryptoConfig config;
+    private GroupConfig config;
     private Set<ByteBuffer> nonceSet;
     private static final int VERSION = 1;
     private static final int LAYOUT = 1;
@@ -37,7 +37,7 @@ public class SecureMulticastSocket extends MulticastSocket {
 
     SecureMulticastSocket(int port, String configPath) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidParameterSpecException {
         super(port);
-        GroupCryptoParser parser = new GroupCryptoParser(configPath);
+        GroupConfigParser parser = new GroupConfigParser(configPath);
         config = parser.parseFile();
         cipher = Cipher.getInstance(config.getCipherSuite());
         mac = Mac.getInstance(config.getMacAlgorithm());
@@ -50,6 +50,7 @@ public class SecureMulticastSocket extends MulticastSocket {
 
             byte[] input = packet.getData();
             byte[] nonce = generateNonce();
+
 
             cipher.init(Cipher.ENCRYPT_MODE, config.getSymmetricKeyValue()); // IV is generated when one is needed
             byte[] cipherText = new byte[cipher.getOutputSize(input.length + nonce.length)];

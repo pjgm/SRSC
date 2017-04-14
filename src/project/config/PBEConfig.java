@@ -2,13 +2,13 @@ package project.config;
 
 import javax.crypto.spec.SecretKeySpec;
 
-public class PBECryptoConfig {
+public class PBEConfig {
 
     private String algorithm;
     private byte[] salt;
     private int iterationCount;
 
-    public PBECryptoConfig() {
+    public PBEConfig() {
 
     }
 
