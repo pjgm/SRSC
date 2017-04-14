@@ -1,7 +1,53 @@
-CIPHERSUITE:    IDEA/CTR/NoPadding
+#CIPHERSUITE: IDEA/CTR/NoPadding
+#CIPHERSUITE: AES/CTS/PKCS7Padding
+#CIPHERSUITE: AES/CFB/PKCS7Padding
+#CIPHERSUITE: DESede/CBC/PKCS5Padding
+#CIPHERSUITE: DESede/ECB/PKCS5Padding
+#CIPHERSUITE: DESede/CTR/PKCS5Padding
+#CIPHERSUITE: DESede/OFB/PKCS5Padding
+#CIPHERSUITE: DES/CBC/PKCS7Padding
+#CIPHERSUITE: DES/ECB/PKCS7Padding
+#CIPHERSUITE: DES/CTR/PKCS7Padding
+#CIPHERSUITE: DES/OFB/PKCS7Padding
+#CIPHERSUITE: BLOWFISH/CBC/PKCS7Padding
+#CIPHERSUITE: BLOWFISH/ECB/PKCS7Padding
+#CIPHERSUITE: BLOWFISH/CTR/PKCS7Padding
+#CIPHERSUITE: BLOWFISH/OFB/PKCS7Padding
+#CIPHERSUITE: TWOFISH/CBC/PKCS7Padding
+#CIPHERSUITE: TWOFISH/ECB/PKCS7Padding
+#CIPHERSUITE: TWOFISH/CTR/PKCS7Padding
+#CIPHERSUITE: TWOFISH/OFB/PKCS7Padding
+#CIPHERSUITE: Serpent/CBC/PKCS7Padding
+#CIPHERSUITE: Serpent/ECB/PKCS7Padding
+#CIPHERSUITE: Serpent/CTR/PKCS7Padding
+#CIPHERSUITE: Serpent/OFB/PKCS7Padding
+#CIPHERSUITE: THREEFISH-1024/CBC/PKCS7Padding
+#CIPHERSUITE: TEA/CBC/PKCS7Padding
+#CIPHERSUITE: RC6/CBC/PKCS7Padding
+#CIPHERSUITE: RC5/CBC/ZeroBytePadding
+#CIPHERSUITE: CAMELLIA/CBC/ZeroBytePadding
+#CIPHERSUITE: CAMELLIA/CBC/PKCS7Padding
+#CIPHERSUITE: SEED/CBC/PKCS7Padding
+#CIPHERSUITE: SHACAL2/CBC/PKCS7Padding
+#CIPHERSUITE: SKIPJACK/CBC/PKCS7Padding
+#CIPHERSUITE: XTEA/CBC/PKCS7Padding
+#CIPHERSUITE: SM4/CBC/PKCS7Padding
+#CIPHERSUITE: SM4/CBC/ISO10126Padding
+#CIPHERSUITE: SM4/CBC/X923Padding
+#CIPHERSUITE: NOEKEON/CFB/X923Padding
+#CIPHERSUITE: GOST28147/CFB/X923Padding
+CIPHERSUITE: CAST6/CFB/X923Padding
+
+
+
+
+
 KEYSIZE:        256
-#KEYVALUE:      ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
-KEYVALUE:       ffffffffffffffffffffffffffffffff
+
+#KEYVALUE: ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
+KEYVALUE:      ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
+#KEYVALUE:       ffffffffffffffffffffffffffffffff
+#KEYVALUE:       ffffffffffffffff
 MAC:            HMacSHA1
 MACKEYSIZE:     256
 MACKEYVALUE:    ffffffffffffffffffffffffffffffa1
