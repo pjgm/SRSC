@@ -91,10 +91,10 @@ public class MulticastChat extends Thread {
     dataStream.writeUTF(username);
     dataStream.close();
 
-    byte[] container = byteStream.toByteArray();
-    DatagramPacket container = new DatagramPacket(container, container.length, group,
+    byte[] containers = byteStream.toByteArray();
+    DatagramPacket containers = new DatagramPacket(containers, containers.length, group,
                                                msocket.getLocalPort());
-    msocket.send(container);
+    msocket.send(containers);
   } 
 
   // Processamento de um JOIN ao grupo multicast com notificacao
@@ -119,10 +119,10 @@ public class MulticastChat extends Thread {
     dataStream.writeUTF(username);
     dataStream.close();
 
-    byte[] container = byteStream.toByteArray();
-    DatagramPacket container = new DatagramPacket(container, container.length, group,
+    byte[] containers = byteStream.toByteArray();
+    DatagramPacket containers = new DatagramPacket(containers, containers.length, group,
                                                msocket.getLocalPort());
-    msocket.send(container);
+    msocket.send(containers);
   } 
 
   // Processes a multicast chat LEAVE PDU and notifies listeners
@@ -149,10 +149,10 @@ public class MulticastChat extends Thread {
     dataStream.writeUTF(message);
     dataStream.close();
 
-    byte[] container = byteStream.toByteArray();
-    DatagramPacket container = new DatagramPacket(container, container.length, group,
+    byte[] containers = byteStream.toByteArray();
+    DatagramPacket containers = new DatagramPacket(containers, containers.length, group,
                                                msocket.getLocalPort());
-    msocket.send(container);
+    msocket.send(containers);
   } 
 
 
@@ -174,18 +174,18 @@ public class MulticastChat extends Thread {
   // 
   public void run() {
     byte[] buffer = new byte[65508];
-    DatagramPacket container = new DatagramPacket(buffer, buffer.length);
+    DatagramPacket containers = new DatagramPacket(buffer, buffer.length);
 
     while (isActive) {
       try {
 
         // Comprimento do DatagramPacket RESET antes do request
-        container.setLength(buffer.length);
-        msocket.receive(container);
+        containers.setLength(buffer.length);
+        msocket.receive(containers);
 
         DataInputStream istream = 
-          new DataInputStream(new ByteArrayInputStream(container.getData(),
-                container.getOffset(), container.getLength()));
+          new DataInputStream(new ByteArrayInputStream(containers.getData(),
+                containers.getOffset(), containers.getLength()));
 
         long magic = istream.readLong();
 
@@ -196,17 +196,17 @@ public class MulticastChat extends Thread {
         int opCode = istream.readInt();
         switch (opCode) {
         case JOIN:
-          processJoin(istream, container.getAddress(), container.getPort());
+          processJoin(istream, containers.getAddress(), containers.getPort());
           break;
         case LEAVE:
-          processLeave(istream, container.getAddress(), container.getPort());
+          processLeave(istream, containers.getAddress(), containers.getPort());
           break;
         case MESSAGE:
-          processMessage(istream, container.getAddress(), container.getPort());
+          processMessage(istream, containers.getAddress(), containers.getPort());
           break;
         default:
           error("Cod de operacao desconhecido " + opCode + " enviado de " 
-                + container.getAddress() + ":" + container.getPort());
+                + containers.getAddress() + ":" + containers.getPort());
         }
 
       } catch (InterruptedIOException e) {

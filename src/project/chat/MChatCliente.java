@@ -2,18 +2,27 @@ package project.chat;// MChatCliente.java
 // 
 
 import project.config.PBEConfig;
+import project.containers.AuthContainer;
+import project.exceptions.*;
+import project.exceptions.AccessControlException;
 import project.parsers.PBEConfigParser;
 import project.pbe.PBEncryption;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
-import java.security.GeneralSecurityException;
+import java.net.Socket;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Scanner;
@@ -22,8 +31,12 @@ import java.util.Scanner;
 // e pode ir sendo melhorada pelos alunos para acomodar as
 // diversas funcionalidades do trabalho 
 
-public class MChatCliente extends JFrame implements MulticastChatEventListener
-{
+public class MChatCliente extends JFrame implements MulticastChatEventListener {
+
+	private static final int AUTH_FAILED = 1;
+	private static final int AC_FAILED = 2;
+	private static final int SUCCESS = 3;
+
 	// definicao de um objecto representando um "multicast chat"
 	protected MulticastChat chat;
 
@@ -350,22 +363,64 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener
 		}
 
 		Scanner scanner = new Scanner(System.in);
-		System.out.print("Please enter your password to decrypt the " + args[1] + ".crypto configuration file: ");
+		System.out.print("Please enter your password: ");
 		String password = scanner.nextLine();
 
-		PBEConfigParser parser = new PBEConfigParser("src/project/cfgfiles/" + args[1] + ".pbe");
-		PBEConfig config = parser.parseFile();
+		SecureRandom r = new SecureRandom();
+		byte [] nonce = new byte[128];
+		r.nextBytes(nonce);
 
-        try {
-            PBEncryption pbe = new PBEncryption(password, "224.0.0.2", config);
-            pbe.encryptFile();
-            pbe.decryptFile();
-        } catch (GeneralSecurityException e) {
-            e.printStackTrace();
-        }
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-512");
+			byte[] pwhash = md.digest(password.getBytes());
+
+			AuthContainer container = new AuthContainer(username, args[1], nonce, pwhash);
+
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutput oo =  new ObjectOutputStream(bos);
+			oo.writeObject(container);
+			oo.close();
+			byte[] containerBytes = bos.toByteArray();
+
+			PBEConfigParser pbeConfigParser = new PBEConfigParser("src/project/cryptocfgfiles/" + args[1] + ".pbe");
+			PBEConfig config = pbeConfigParser.parseFile();
+			PBEncryption pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(pwhash), containerBytes, config);
+			byte[] encryptedContainer = pbEnc.encryptFile();
+
+			Socket socket = new Socket("localhost", 9000);
+
+			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+
+			oos.writeInt(encryptedContainer.length);
+			oos.writeUTF(username);
+			oos.writeUTF(args[1]);
+			oos.writeUTF(Base64.getEncoder().encodeToString(pbEnc.getIv()));
+			oos.write(encryptedContainer);
+			oos.flush();
+
+			int status = ois.readInt();
+
+			if (status == AUTH_FAILED)
+				throw new AuthenticationException("Username or password invalid");
+			else if (status == AC_FAILED)
+				throw new AccessControlException("You are not allowed in this room");
+			else if (status == SUCCESS)
+				System.out.println("Authentication complete. You can now enter the chat.");
+
+			ois.close();
+			oos.close();
+
+		} catch (NoSuchAlgorithmException | IllegalBlockSizeException | InvalidKeySpecException | BadPaddingException | NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException e) {
+			e.printStackTrace();
+			return;
+		} catch (AuthenticationException | AccessControlException e) {
+			System.err.println(e.getMessage());
+			return;
+		}
 
 
-        try {
+		try {
 			MChatCliente frame = new MChatCliente();
 			frame.setSize(800, 300);
 			frame.setVisible( true);

@@ -6,10 +6,7 @@ import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -18,42 +15,45 @@ import java.security.spec.InvalidKeySpecException;
 
 public class PBEncryption {
 
-    private static String CFGPATH = "src/project/cfgfiles/";
+    private static String CFGPATH = "src/project/cryptocfgfiles/";
     private Cipher c;
     private Key key;
     private PBEConfig config;
-    private String file;
+    private byte[] data;
+    private byte[] iv;
 
-    public PBEncryption(String password, String file, PBEConfig config) throws NoSuchAlgorithmException,
+    public PBEncryption(String password, byte[] data, PBEConfig config) throws NoSuchAlgorithmException,
             InvalidKeySpecException, NoSuchPaddingException {
         this.c = Cipher.getInstance(config.getAlgorithm());
         PBEKeySpec pbeSpec = new PBEKeySpec(password.toCharArray());
-        this.file = file;
         this.config = config;
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(config.getAlgorithm());
         this.key = keyFactory.generateSecret(pbeSpec);
+        this.data = data;
+        this.iv = null;
     }
 
-    public void encryptFile() throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, BadPaddingException, IllegalBlockSizeException {
+    public byte[] encryptFile() throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, BadPaddingException, IllegalBlockSizeException {
         c.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(config.getSalt(), config.getIterationCount()));
-        byte[] data = Files.readAllBytes(Paths.get(CFGPATH + file + ".crypto"));
         byte[] out = c.doFinal(data);
-        FileOutputStream fos = new FileOutputStream(CFGPATH + file);
-        fos.write(out);
-        fos.close();
+        if (c.getIV() != null)
+            iv = c.getIV();
+        return out;
     }
 
-    public void decryptFile() throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, BadPaddingException, IllegalBlockSizeException {
-        if (c.getIV() != null) {
-            c.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(config.getSalt(), config.getIterationCount(), new IvParameterSpec(c.getIV())));
-        }
-        else {
+    public byte[] decryptFile(byte[] iv) throws NoSuchPaddingException, NoSuchAlgorithmException,
+            InvalidAlgorithmParameterException, InvalidKeyException, IOException, BadPaddingException, IllegalBlockSizeException {
+        if (iv != null)
+            c.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(config.getSalt(), config.getIterationCount(), new
+                    IvParameterSpec(iv)));
+        else
             c.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(config.getSalt(), config.getIterationCount()));
-        }
-        byte[] data = Files.readAllBytes(Paths.get(CFGPATH + file));
+
         byte[] out = c.doFinal(data);
-        FileOutputStream fos = new FileOutputStream(CFGPATH + file + ".crypto");
-        fos.write(out);
-        fos.close();
+        return out;
+    }
+
+    public byte[] getIv() {
+        return iv;
     }
 }

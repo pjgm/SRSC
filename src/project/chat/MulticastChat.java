@@ -56,7 +56,7 @@ public class MulticastChat extends Thread {
     String path = group.getHostAddress().toString();
     // create & configure multicast socket
     try {
-      msocket = new SecureMulticastSocket(port, "src/project/cfgfiles/" + path + ".crypto");
+      msocket = new SecureMulticastSocket(port, "src/project/cryptocfgfiles/" + path + ".crypto");
     } catch (NoSuchPaddingException e) {
       e.printStackTrace();
     } catch (NoSuchAlgorithmException e) {

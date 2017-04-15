@@ -1,7 +1,7 @@
 package project.chat;
 
 import project.config.GroupConfig;
-import project.container.SecureContainer;
+import project.containers.SecureContainer;
 import project.exceptions.CorruptedMessageException;
 import project.exceptions.DuplicateMessageException;
 import project.parsers.GroupConfigParser;
@@ -85,6 +85,7 @@ public class SecureMulticastSocket extends MulticastSocket {
 
             SecureContainer container = (SecureContainer) ois.readObject();
             ois.close();
+
             int ctLength = container.getPayloadSize();
             byte[] cipherText = container.getPayload();
 
