@@ -1,0 +1,12 @@
+CIPHERSUITE: AES/CTR/PKCS7Padding
+
+KEYSIZE:        256
+
+#KEYVALUE: ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
+KEYVALUE:      ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
+#KEYVALUE:       ffffffffffffffffffffffffffffffff
+#KEYVALUE:       ffffffffffffffff
+MAC:            HMacSHA1
+MACKEYSIZE:     128
+MACKEYVALUE:    ffffffffffffffffffffffffffffffa1
+NONCESIZE:      128

@@ -1,0 +1,3 @@
+PBE:   PBEWithHmacSHA512AndAES_256
+SALT:   ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
+CTR:    20000

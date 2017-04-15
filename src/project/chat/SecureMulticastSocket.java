@@ -4,7 +4,6 @@ import project.config.GroupConfig;
 import project.containers.SecureContainer;
 import project.exceptions.CorruptedMessageException;
 import project.exceptions.DuplicateMessageException;
-import project.parsers.GroupConfigParser;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -50,15 +49,21 @@ public class SecureMulticastSocket extends MulticastSocket {
             byte[] input = packet.getData();
             byte[] nonce = generateNonce();
 
+            byte[] plainText = new byte[input.length + nonce.length];
+
+            System.arraycopy(input, 0, plainText, 0, input.length);
+            System.arraycopy(nonce, 0, plainText, input.length, nonce.length);
+
+
             cipher.init(Cipher.ENCRYPT_MODE, config.getSymmetricKeyValue()); // IV is generated when one is needed
-            byte[] cipherText = new byte[cipher.getOutputSize(input.length + nonce.length)];
-            int ctLength = cipher.update(input, 0, input.length, cipherText, 0);
-            ctLength += cipher.doFinal(nonce, 0 , nonce.length, cipherText, ctLength);
+
+            byte[] cipherText = cipher.doFinal(plainText);
 
             mac.init(config.getMacKeyValue());
             byte[] macBytes = mac.doFinal(cipherText);
 
-            SecureContainer container = new SecureContainer(VERSION, LAYOUT, ctLength, cipherText, macBytes);
+            SecureContainer container = new SecureContainer(VERSION, LAYOUT, input.length, cipherText, macBytes,
+                    cipher.getIV());
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -67,6 +72,7 @@ public class SecureMulticastSocket extends MulticastSocket {
             oos.close();
 
             packet.setData(baos.toByteArray());
+
             super.send(packet);
         }
         catch (GeneralSecurityException | IOException e) {
@@ -95,14 +101,14 @@ public class SecureMulticastSocket extends MulticastSocket {
                 throw new CorruptedMessageException("Message was corrupted or tampered with");
 
             if (needsIV())
-                cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue(), new IvParameterSpec(cipher.getIV()));
+                cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue(), new IvParameterSpec(container.getIv()));
             else
                 cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue());
 
-            byte[] plainText = new byte[cipher.getOutputSize(ctLength)];
-            int ptLength = cipher.update(cipherText, 0, ctLength, plainText, 0);
-            ptLength += cipher.doFinal(plainText, ptLength);
-            byte[] nonce = Arrays.copyOfRange(plainText, ptLength - config.getNonceSize(), ptLength);
+            byte[] combinedPlainText = cipher.doFinal(cipherText);
+
+            byte[] plainText = Arrays.copyOfRange(combinedPlainText, 0, ctLength);
+            byte[] nonce = Arrays.copyOfRange(combinedPlainText, ctLength, combinedPlainText.length);
 
             if (nonceSet.contains(ByteBuffer.wrap(nonce)))
                 throw new DuplicateMessageException("Duplicate message. Possible replaying attack.");
