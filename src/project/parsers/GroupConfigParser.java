@@ -3,22 +3,25 @@ package project.parsers;
 import project.config.GroupConfig;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 
 public class GroupConfigParser {
 
     private GroupConfig config;
-    private String path;
+    BufferedReader br;
 
-    public GroupConfigParser(String path) {
-        this.path = path;
+    public GroupConfigParser(String path) throws FileNotFoundException {
+        br = new BufferedReader(new FileReader(path));
         config = new GroupConfig();
     }
 
+    public GroupConfigParser(byte[] file) {
+        config = new GroupConfig();
+        InputStream is = new ByteArrayInputStream(file);
+        br = new BufferedReader(new InputStreamReader(is));
+    }
+
     public GroupConfig parseFile() throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(path));
         String line;
 
         while ((line = br.readLine()) != null) {

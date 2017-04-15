@@ -3,6 +3,8 @@ package project.chat;
 // MulticastChat.java
 // Objecto que representa um chat Multicast
 
+import project.config.GroupConfig;
+
 import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.*;
@@ -41,22 +43,24 @@ public class MulticastChat extends Thread {
   // Listener de eventos enviados por Multicast
   protected MulticastChatEventListener listener;
 
+  protected GroupConfig groupConfig;
 
   // Controlo  - thread de execucao
 
   protected boolean isActive;
 
-  public MulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener) throws IOException {
+  public MulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener, GroupConfig groupConfig) throws IOException {
 
     this.username = username;
     this.group = group;
     this.listener = listener;
+    this.groupConfig = groupConfig;
     isActive = true;
 
     String path = group.getHostAddress().toString();
     // create & configure multicast socket
     try {
-      msocket = new SecureMulticastSocket(port, "src/project/cryptocfgfiles/" + path + ".crypto");
+      msocket = new SecureMulticastSocket(port, groupConfig);
     } catch (NoSuchPaddingException e) {
       e.printStackTrace();
     } catch (NoSuchAlgorithmException e) {

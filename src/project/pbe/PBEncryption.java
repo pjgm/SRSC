@@ -15,7 +15,6 @@ import java.security.spec.InvalidKeySpecException;
 
 public class PBEncryption {
 
-    private static String CFGPATH = "src/project/cryptocfgfiles/";
     private Cipher c;
     private Key key;
     private PBEConfig config;

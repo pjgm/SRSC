@@ -2,22 +2,25 @@ package project.parsers;
 
 import project.config.PBEConfig;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 
 public class PBEConfigParser {
 
-    private String path;
     private PBEConfig config;
+    BufferedReader br;
 
-    public PBEConfigParser(String path) {
-        this.path = path;
+    public PBEConfigParser(String path) throws FileNotFoundException {
         this.config = new PBEConfig();
+        this.br = new BufferedReader(new FileReader(path));
+    }
+
+    public PBEConfigParser(byte[] file) {
+        this.config = new PBEConfig();
+        InputStream is = new ByteArrayInputStream(file);
+        this.br = new BufferedReader(new InputStreamReader(is));
     }
 
     public PBEConfig parseFile() throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(path));
         String line;
 
         while ((line = br.readLine()) != null) {

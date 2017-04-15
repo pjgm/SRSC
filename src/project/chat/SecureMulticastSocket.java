@@ -35,10 +35,9 @@ public class SecureMulticastSocket extends MulticastSocket {
 
 
 
-    SecureMulticastSocket(int port, String configPath) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidParameterSpecException {
+    SecureMulticastSocket(int port, GroupConfig config) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidParameterSpecException {
         super(port);
-        GroupConfigParser parser = new GroupConfigParser(configPath);
-        config = parser.parseFile();
+        this.config = config;
         cipher = Cipher.getInstance(config.getCipherSuite());
         mac = Mac.getInstance(config.getMacAlgorithm());
         nonceSet = new HashSet<>();

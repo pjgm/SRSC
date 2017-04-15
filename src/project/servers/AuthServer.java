@@ -15,6 +15,9 @@ import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
@@ -87,6 +90,16 @@ public class AuthServer {
             }
 
             outputStream.writeInt(3);
+
+            Path path = Paths.get("src/project/cryptocfgfiles/" + multicastAddress + ".crypto");
+            byte[] data = Files.readAllBytes(path);
+
+            pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(container.getPwHash()), data, config);
+            byte[] encryptedCrypto = pbEnc.encryptFile();
+
+            outputStream.writeUTF(Base64.getEncoder().encodeToString(pbEnc.getIv()));
+            outputStream.writeUTF(Base64.getEncoder().encodeToString(encryptedCrypto));
+
             outputStream.close();
 
         }
