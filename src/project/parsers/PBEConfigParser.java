@@ -7,7 +7,7 @@ import java.io.*;
 public class PBEConfigParser {
 
     private PBEConfig config;
-    BufferedReader br;
+    private BufferedReader br;
 
     public PBEConfigParser(String path) throws FileNotFoundException {
         this.config = new PBEConfig();
