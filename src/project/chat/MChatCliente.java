@@ -389,7 +389,8 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 	public static GroupConfig serverHandshake(String username, String multicastAddress) throws IOException {
 		Scanner scanner = new Scanner(System.in);
 		System.out.print("Please enter your password: ");
-		String password = scanner.nextLine();
+		String password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
+
 
 		SecureRandom r = new SecureRandom();
 		byte[] nonce = new byte[128];
@@ -457,5 +458,17 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 
 		return cryptoconf;
 
+	}
+	public static String pwPrompt(String q){
+		JPasswordField pwfield = new JPasswordField();
+		int res = JOptionPane.showOptionDialog(null,
+				pwfield, q, JOptionPane.NO_OPTION,
+				JOptionPane.PLAIN_MESSAGE,null,
+				new String[]{"OK","Cancel"},"OK" );
+		if(res==0){
+			return new String(pwfield.getPassword());
+		}else{
+			return "";
+		}
 	}
 }
