@@ -15,14 +15,13 @@ import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AuthServer {
 
@@ -38,6 +37,8 @@ public class AuthServer {
         String accesscontrolcfgPath = args[2];
         AccessControlParser acparser = new AccessControlParser(accesscontrolcfgPath);
         Map<String, List<String>> ac = acparser.parseFile();
+
+        Set<ByteBuffer> nonceSet = new HashSet<>();
 
         while (true) {
             Socket socket = listener.accept();
@@ -57,7 +58,7 @@ public class AuthServer {
             String password = Base64.getEncoder().encodeToString(users.get(username));
             PBEncryption pbEnc = new PBEncryption(password, encryptedContainer, config);
 
-            byte[] containerBytes = null;
+            byte[] containerBytes;
 
             try {
                 containerBytes = pbEnc.decryptFile(Base64.getDecoder().decode(encodedIV));
@@ -71,6 +72,11 @@ public class AuthServer {
             ObjectInput oi =  new ObjectInputStream(bis);
 
             AuthContainer container = (AuthContainer) oi.readObject();
+
+            if (nonceSet.contains(ByteBuffer.wrap(container.getNonce()))) {
+                System.err.println("Possible replaying attack. Ignoring message");
+                continue;
+            }
 
             boolean userExists = users.containsKey(container.getUsername());
             boolean isPasswordCorrect = MessageDigest.isEqual(users.get(container.getUsername()), container.getPwHash());
@@ -97,8 +103,12 @@ public class AuthServer {
             pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(container.getPwHash()), data, config);
             byte[] encryptedCrypto = pbEnc.encryptFile();
 
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            byte[] nonceHash = md.digest(container.getNonce());
+
             outputStream.writeUTF(Base64.getEncoder().encodeToString(pbEnc.getIv()));
             outputStream.writeUTF(Base64.getEncoder().encodeToString(encryptedCrypto));
+            outputStream.writeUTF(Base64.getEncoder().encodeToString(nonceHash));
 
             outputStream.close();
 
