@@ -22,6 +22,7 @@ import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
@@ -438,6 +439,12 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 
 			byte[] iv = Base64.getDecoder().decode(ois.readUTF());
 			byte[] encryptedCrypto = Base64.getDecoder().decode(ois.readUTF());
+			byte[] nonceResp = Base64.getDecoder().decode(ois.readUTF());
+			byte[] myNonceResp = md.digest(nonce);
+
+			if (!ByteBuffer.wrap(nonceResp).equals(ByteBuffer.wrap(myNonceResp))) {
+				throw new CorruptedMessageException("Server response hash doesn't match client's computed hash.");
+			}
 
 			pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(pwhash), encryptedCrypto, config);
 			byte[] cryptoFile = pbEnc.decryptFile(iv);
@@ -451,7 +458,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		} catch (NoSuchAlgorithmException | IllegalBlockSizeException | InvalidKeySpecException | BadPaddingException | NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException e) {
 			e.printStackTrace();
 			System.exit(1);
-		} catch (AuthenticationException | AccessControlException e) {
+		} catch (AuthenticationException | AccessControlException | CorruptedMessageException e) {
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}

@@ -16,6 +16,14 @@ public class SecureContainer implements Serializable {
         return header.getPayloadSize();
     }
 
+    public int getVersion() {
+        return header.getVersion();
+    }
+
+    public int getLayout() {
+        return header.getLayout();
+    }
+
     public byte[] getPayload() {
         return payload.getData();
     }

@@ -17,4 +17,12 @@ class Header implements Serializable {
     int getPayloadSize() {
         return payloadSize;
     }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public int getLayout() {
+        return layout;
+    }
 }

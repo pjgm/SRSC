@@ -4,6 +4,8 @@ import project.config.GroupConfig;
 import project.containers.SecureContainer;
 import project.exceptions.CorruptedMessageException;
 import project.exceptions.DuplicateMessageException;
+import project.exceptions.IncompatibleLayoutException;
+import project.exceptions.VersionNotAllowedException;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -31,8 +33,7 @@ public class SecureMulticastSocket extends MulticastSocket {
     private Set<ByteBuffer> nonceSet;
     private static final int VERSION = 1;
     private static final int LAYOUT = 1;
-
-
+    private Set<Integer> ALLOWED_VERSIONS;
 
     SecureMulticastSocket(int port, GroupConfig config) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidParameterSpecException {
         super(port);
@@ -40,6 +41,8 @@ public class SecureMulticastSocket extends MulticastSocket {
         cipher = Cipher.getInstance(config.getCipherSuite());
         mac = Mac.getInstance(config.getMacAlgorithm());
         nonceSet = new HashSet<>();
+        ALLOWED_VERSIONS = new HashSet<>();
+        ALLOWED_VERSIONS.add(1);
     }
 
     @Override
@@ -91,6 +94,15 @@ public class SecureMulticastSocket extends MulticastSocket {
             SecureContainer container = (SecureContainer) ois.readObject();
             ois.close();
 
+            int version = container.getVersion();
+            int layout = container.getLayout();
+
+            if (!ALLOWED_VERSIONS.contains(version))
+                throw new VersionNotAllowedException("Version "+ version + "not compatible with your current version");
+
+            if (container.getLayout() != layout)
+                throw new IncompatibleLayoutException("Current layout not compatible with received message");
+
             int ctLength = container.getPayloadSize();
             byte[] cipherText = container.getPayload();
 
@@ -119,7 +131,7 @@ public class SecureMulticastSocket extends MulticastSocket {
 
         } catch (GeneralSecurityException | ClassNotFoundException e) {
             e.printStackTrace();
-        } catch (DuplicateMessageException | CorruptedMessageException e) {
+        } catch (DuplicateMessageException | CorruptedMessageException | VersionNotAllowedException | IncompatibleLayoutException e) {
             System.err.println(e.getMessage());
         }
     }
