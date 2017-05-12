@@ -47,7 +47,10 @@ KEYSIZE:        256
 KEYVALUE:      ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
 #KEYVALUE:       ffffffffffffffffffffffffffffffff
 #KEYVALUE:       ffffffffffffffff
-MAC:            HMacSHA1
-MACKEYSIZE:     128
-MACKEYVALUE:    ffffffffffffffffffffffffffffffa1
+#MAC:            HMacSHA256
+#MAC:            SKIPJACKMac
+#MAC:            HMAC-Skein-512-256
+MAC:            Skein-MAC512
+MACKEYSIZE:     512
+MACKEYVALUE:    ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1ffffffffffffffffffffffffffffffa1
 NONCESIZE:      128
