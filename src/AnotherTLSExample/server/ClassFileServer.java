@@ -5,7 +5,6 @@ import java.net.*;
 import java.security.KeyStore;
 import javax.net.*;
 import javax.net.ssl.*;
-import javax.security.cert.X509Certificate;
 
 /* ClassFileServer.java --  a simple HTTP GET request file
  * supporting HTTP or HTTP/SSL (one-way or mutual authentication)
@@ -157,7 +156,7 @@ public class ClassFileServer extends ClassServer {
 
 //              keystore - chaves do servidor: criada com passwd indicada
 
-		ks.load(new FileInputStream("serverkeystore"), passphrase);//		
+		ks.load(new FileInputStream("TLSCODE/serverkeystore"), passphrase);//
 		kmf.init(ks, passphrase);
 		ctx.init(kmf.getKeyManagers(), null, null);
           

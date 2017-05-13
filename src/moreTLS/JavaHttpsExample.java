@@ -7,12 +7,10 @@ import javax.net.ssl.HttpsURLConnection;
 public class JavaHttpsExample
 {
    
-    public static void main(String[] args)
-       throws Exception
-    {
+    public static void main(String[] args) throws Exception {
 
-	//	String httpsURL = "https://www.bpinet.pt:443";
-	String httpsURL = args[0];
+		String httpsURL = "https://www.bpinet.pt:443";
+	//String httpsURL = args[0];
 	URL myurl = new URL(httpsURL);
 	HttpsURLConnection con = (HttpsURLConnection)myurl.openConnection();
 	InputStream ins = con.getInputStream();
