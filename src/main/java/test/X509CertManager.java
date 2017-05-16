@@ -89,6 +89,7 @@ public class X509CertManager {
 
     public static void main(String args[]) throws Exception {
         X509CertManager certManager = new X509CertManager("src/main/java/test", "client");
+        certManager.createEmptyKeystore("test", "12345678");
         X509Certificate cert = certManager.generateSelfSignedX509Certificate("RSA", 2048, "SHA256WithRSA", "PT",
                 "Paulo Martins Inc", "Secret", "Corroios", "Setubal");
         certManager.storeX509CertificateInKeyStore("test", "12345678", cert);
