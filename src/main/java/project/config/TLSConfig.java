@@ -17,7 +17,7 @@ public class TLSConfig {
     public TLSConfig() {
     }
 
-    public String[] getVersions() {
+    public String[] getProtocols() {
         return versions;
     }
 
