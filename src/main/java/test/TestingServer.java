@@ -16,16 +16,15 @@ public class TestingServer {
     public static void main(String args[]) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, NoSuchProviderException {
 
         int port = 50000; // Ports below 1024 are called Privileged Ports and must be run as root
-        //TODO: put in cfg
-        System.setProperty("javax.net.ssl.trustStore", "src/main/java/test/serverStore/truststore.jks");
 
         String allowedProtocolsArr[] = {"TLSv1.2"};
         Set<String> allowedProtocols = new HashSet<>();
         allowedProtocols.addAll(Arrays.asList(allowedProtocolsArr));
 
-        TLSConfig tlsConfig = new TLSParser("src/main/java/test/tls.config").parseFile();
+        TLSConfig tlsConfig = new TLSParser("src/main/java/test/serverStore/tls.config").parseFile();
 
-        // One or multiple versions in cfg?
+        System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
+
         for (String v : tlsConfig.getProtocols()) {
             if (!allowedProtocols.contains(v)) {
                 System.err.println("Bad config: " + v + " is not an allowed protocol");
