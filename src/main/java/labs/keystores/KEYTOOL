@@ -23,5 +23,3 @@ keytool -list -keystore mykeystore.jks -storetype jceks
 // chaves que vao usar.
 
 Ver codigo exemplificativo sobre utilizacao de labs.keystores
-
-

@@ -106,30 +106,6 @@ public class X509CertManager {
     public static void main(String args[]) throws Exception {
         X509CertManager certManager = new X509CertManager("src/main/java/test", "client");
 
-        // KeyStore creation
-        //certManager.createEmptyKeyStore("keystore", "12345678");
-
-        //KeyPair keyPair = certManager.generateKeyPair("RSA", 2048);
-        //X509Certificate cert = certManager.generateSelfSigned(keyPair, "SHA256WithRSA", "PT",
-        //        "Paulo Martins Inc", "Secret", "Corroios", "Setubal");
-
-        //certManager.addToKeyStore("keystore", "12345678", "EntradaPrivada", "12345678", cert,
-        //        keyPair.getPrivate());
-
-        // TrustStore creation
-        //certManager.createEmptyKeyStore("truststore", "12345678");
-        //certManager.addToTrustStore("truststore", "12345678", cert, "trustedCert");
-
-        //KeyPair keyPair = certManager.generateKeyPair("RSA", 2048);
-
-        //X509Certificate cert = certManager.generateSelfSigned(keyPair, "SHA256withRSA", "PT", "MChat", "server", "rack", "datacenter");
-
-        //certManager.createEmptyKeyStore("keystore", "12345678");
-
-        //certManager.addToKeyStore("keystore", "12345678", "rsacert", "12345678", cert, keyPair.getPrivate());
-
-        //certManager.createEmptyKeyStore("truststore", "12345678");
-
         KeyStore ks = certManager.loadKeyStoreFile("keystore", "12345678");
         //certManager.createEmptyKeyStore("truststore", "12345678");
         certManager.addToTrustStore("../serverStore/truststore", "12345678", (X509Certificate) ks.getCertificate("entradaprivada"), "clientrsatrustedCert");

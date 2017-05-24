@@ -261,3 +261,9 @@ BC
 	Cipher BROKENPBEWITHMD5ANDDES
 	Cipher BROKENPBEWITHSHA1ANDDES
 	Cipher OLDPBEWITHSHAANDTWOFISH-CBC
+
+
+
+
+Para garantir seguranca passada e futura perfeitas basta que o novo user acrescente o seu nr publico
+

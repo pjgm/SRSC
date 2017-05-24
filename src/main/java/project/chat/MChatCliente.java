@@ -403,7 +403,8 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			MessageDigest md = MessageDigest.getInstance("SHA-512");
 			byte[] pwhash = md.digest(password.getBytes());
 
-			AuthContainer container = new AuthContainer(username, multicastAddress, nonce, pwhash);
+			AuthContainer container = new AuthContainer(username, multicastAddress, nonce, pwhash); //TODO: remover
+			// overhead (pwhash no container)
 
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutput oo = new ObjectOutputStream(bos);
@@ -474,8 +475,8 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 				new String[]{"OK","Cancel"},"OK" );
 		if(res==0){
 			return new String(pwfield.getPassword());
-		}else{
-			return "";
 		}
+		else
+			return "";
 	}
 }

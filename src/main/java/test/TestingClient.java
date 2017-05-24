@@ -16,13 +16,11 @@ public class TestingClient {
 
     public static void main(String args[]) throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
 
-        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-
-        SSLSocket sslSocket = (SSLSocket) factory.createSocket("localhost", 50000);
-
         TLSConfig tlsConfig = new TLSParser("src/main/java/test/clientStore/tls.config").parseFile();
-
         System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
+
+        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        SSLSocket sslSocket = (SSLSocket) factory.createSocket("localhost", 50000);
 
         sslSocket.setEnabledProtocols(tlsConfig.getProtocols());
         sslSocket.setEnabledCipherSuites(tlsConfig.getCiphersuites());

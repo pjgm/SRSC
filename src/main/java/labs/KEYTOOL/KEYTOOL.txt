@@ -24,3 +24,91 @@ keytool -list -v -keystore /Library/Java/Home/lib/security/cacerts
 
 #Gerar certificado autoassinado em formato PKCS12 (numa storetype pkcs12)
 keytool -genkeypair -alias hj -keystore hj.pfx -validity 365 -keyalg DSA -keysize 1024 -storetype pkcs12
+
+
+------------------------------------------------SERVER KEYSTORE---------------------------------------------------------
+
+#Generate root cert
+keytool -genkeypair -alias root -keyalg RSA -keystore keystore.jks -dname "CN=ROOT" -storepass 123456 -keypass 123456 -validity 365 -keysize 4096 -ext bc=ca:true
+
+#Generate rsa cert
+keytool -genkeypair -alias rsacert -keyalg RSA -keystore keystore.jks -dname "CN=RSACERT" -storepass 123456 -keypass 123456 -validity 365 -keysize 2048
+
+#Generate dsa cert
+keytool -genkeypair -alias dsacert -keyalg DSA -sigalg SHA256withDSA -keystore keystore.jks -dname "CN=DSACERT" -storepass 123456 -keypass 123456 -validity 365 -keysize 2048
+
+#Create certificate request for RSA cert
+keytool -certreq -keystore keystore.jks -storepass 123456 -alias rsacert -file rsacert.csr
+
+#Create certificate request for DSA cert
+keytool -certreq -keystore keystore.jks -storepass 123456 -alias dsacert -file dsacert.csr
+
+#Sign RSA cert with ROOT cert
+keytool -gencert -keystore keystore.jks -storepass 123456 -alias root -infile rsacert.csr -outfile rsacert.cer
+
+#Sign DSA cert with ROOT cert
+keytool -gencert -keystore keystore.jks -storepass 123456 -alias root -infile dsacert.csr -outfile dsacert.cer
+
+#Import RSA cert to original keystore
+keytool -importcert -keystore keystore.jks -storepass 123456 -file rsacert.cer -alias rsacert
+
+#Import DSA cert to original keystore
+keytool -importcert -keystore keystore.jks -storepass 123456 -file dsacert.cer -alias dsacert
+
+#Remove cert request
+rm rsacert.csr dsacert.csr
+
+------------------------------------------------CLIENT KEYSTORE---------------------------------------------------------
+
+#Generate root cert
+keytool -genkeypair -alias client1root -keyalg RSA -keystore keystore.jks -dname "CN=CLIENT1ROOT" -storepass 123456 -keypass 123456 -validity 365 -keysize 4096 -ext bc=ca:true
+
+#Generate rsa cert
+keytool -genkeypair -alias client1rsacert -keyalg RSA -keystore keystore.jks -dname "CN=CLIENT1RSACERT" -storepass 123456 -keypass 123456 -validity 365 -keysize 2048
+
+#Generate dsa cert
+keytool -genkeypair -alias client1dsacert -keyalg DSA -sigalg SHA256withDSA -keystore keystore.jks -dname "CN=CLIENT1DSACERT" -storepass 123456 -keypass 123456 -validity 365 -keysize 2048
+
+#Create certificate request for RSA cert
+keytool -certreq -keystore keystore.jks -storepass 123456 -alias client1rsacert -file client1rsacert.csr
+
+#Create certificate request for DSA cert
+keytool -certreq -keystore keystore.jks -storepass 123456 -alias client1dsacert -file client1dsacert.csr
+
+#Sign RSA cert with ROOT cert
+keytool -gencert -keystore keystore.jks -storepass 123456 -alias client1root -infile client1rsacert.csr -outfile
+client1rsacert.cer
+
+#Sign DSA cert with ROOT cert
+keytool -gencert -keystore keystore.jks -storepass 123456 -alias client1root -infile client1dsacert.csr -outfile
+client1dsacert.cer
+
+#Import RSA cert to original keystore
+keytool -importcert -keystore keystore.jks -storepass 123456 -file client1rsacert.cer -alias client1rsacert
+
+#Import DSA cert to original keystore
+keytool -importcert -keystore keystore.jks -storepass 123456 -file client1dsacert.cer -alias client1dsacert
+
+#Remove cert request
+rm client1rsacert.csr client1dsacert.csr
+
+#Export client root cert
+keytool -export -alias client1root -keystore keystore.jks -file client1root.cer
+
+------------------------------------------------SERVER TRUSTSTORE-------------------------------------------------------
+#change to project dir
+cd ..
+
+#import client root cert to truststore
+keytool -import -file clientStore/client1root.cer -alias client1root -keystore serverStore/truststore.jks
+
+------------------------------------------------CLIENT TRUSTSTORE-------------------------------------------------------
+
+#change to project dir
+cd ..
+
+#import client root cert to truststore
+keytool -import -file serverStore/root.cer -alias serverroot -keystore clientStore/truststore.jks
+
+#convert .p12 to .jks
+keytool -importkeystore -srckeystore rootcert.p12 -srcstoretype pkcs12 -srcalias client1root -destkeystore rootcert.jks -deststoretype jks -deststorepass 123456 -destalias client1root
