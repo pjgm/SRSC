@@ -3,27 +3,35 @@ package test;
 import project.config.TLSConfig;
 import project.parsers.TLSParser;
 
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.*;
 import java.io.IOException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 
 public class TestingClient {
 
-    public static void main(String args[]) throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+    public static void main(String args[]) throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException, UnrecoverableKeyException, KeyManagementException {
 
         TLSConfig tlsConfig = new TLSParser("src/main/java/test/clientStore/tls.config").parseFile();
         System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
 
-        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        KeyStore keystore = tlsConfig.getPrivkeystore();
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+        kmf.init(keystore, tlsConfig.getKeystorepw());
+
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(kmf.getKeyManagers(), null, null);
+
+        SSLSocketFactory factory = sslContext.getSocketFactory();
         SSLSocket sslSocket = (SSLSocket) factory.createSocket("localhost", 50000);
 
         sslSocket.setEnabledProtocols(tlsConfig.getProtocols());
         sslSocket.setEnabledCipherSuites(tlsConfig.getCiphersuites());
+
+        if (tlsConfig.getMode().equals("CLIENTE")) {
+            sslSocket.setUseClientMode(false);
+        }
 
         System.out.println("Enabled ciphers " + Arrays.asList(sslSocket.getEnabledCipherSuites()));
         System.out.println("test enabled protocols: " + Arrays.asList(sslSocket.getEnabledProtocols()));

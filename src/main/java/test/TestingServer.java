@@ -42,9 +42,14 @@ public class TestingServer {
         SSLServerSocketFactory socketFactory = sslContext.getServerSocketFactory();
         SSLServerSocket serverSocket = (SSLServerSocket) socketFactory.createServerSocket(port);
 
-
         serverSocket.setEnabledProtocols(tlsConfig.getProtocols());
         serverSocket.setEnabledCipherSuites(tlsConfig.getCiphersuites());
+
+        if (tlsConfig.getMode().equals("CLIENTE-SERVIDOR")) {
+            serverSocket.setNeedClientAuth(true);
+        } else if (tlsConfig.getMode().equals("CLIENTE")) {
+            serverSocket.setUseClientMode(true);
+        }
 
         System.out.println("Enabled ciphers: " + Arrays.asList(serverSocket.getEnabledCipherSuites()));
 
