@@ -3,16 +3,22 @@ package project.chat;// MChatCliente.java
 
 import project.config.GroupConfig;
 import project.config.PBEConfig;
+import project.config.TLSConfig;
 import project.containers.AuthContainer;
 import project.exceptions.*;
 import project.exceptions.AccessControlException;
 import project.parsers.GroupConfigParser;
 import project.parsers.PBEConfigParser;
+import project.parsers.TLSParser;
 import project.pbe.PBEncryption;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -24,11 +30,9 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.Scanner;
+import java.util.*;
 
 // Interface para a sessao de chat swing-based
 // e pode ir sendo melhorada pelos alunos para acomodar as
@@ -328,10 +332,11 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 	}
 
 	// Command-line invocation expecting three arguments
-	public static void main(String[] args) throws IOException {
-		if ((args.length != 3) && (args.length != 4)) {
+	public static void main(String[] args) throws IOException, UnrecoverableKeyException, CertificateException, KeyStoreException, KeyManagementException {
+		if (args.length != 7) {
 			System.err.println("Utilizar: MChatCliente "
-					+ "<nickusername> <grupo IPMulticast> <porto> { <ttl> }");
+					+ "<nickusername> <grupo IPMulticast> <porto> { <ttl> } <serverAddress> <serverPort> " +
+					"<tlsconfigfile>");
 			System.err.println("       - TTL default = 1");
 			System.exit(1);
 		}
@@ -371,7 +376,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			}
 		}
 
-		GroupConfig groupConfig = serverHandshake(username, args[1]);
+		GroupConfig groupConfig = serverHandshake(args[4], Integer.parseInt(args[5]), args[6], username, args[1]);
 
 		try {
 			MChatCliente frame = new MChatCliente(groupConfig);
@@ -387,7 +392,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		}
 	}
 
-	public static GroupConfig serverHandshake(String username, String multicastAddress) throws IOException {
+	public static GroupConfig serverHandshake(String serverAddress, int port, String tlsConfigPath, String username, String multicastAddress) throws IOException, UnrecoverableKeyException, CertificateException, KeyStoreException, KeyManagementException {
 		Scanner scanner = new Scanner(System.in);
 		System.out.print("Please enter your password: ");
 		String password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
@@ -412,12 +417,15 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			oo.close();
 			byte[] containerBytes = bos.toByteArray();
 
-			PBEConfigParser pbeConfigParser = new PBEConfigParser("src/project/cryptocfgfiles/" + multicastAddress + ".pbe");
+			PBEConfigParser pbeConfigParser = new PBEConfigParser("src/main/java/project/cryptocfgfiles/" +
+					multicastAddress + ".pbe");
 			PBEConfig config = pbeConfigParser.parseFile();
 			PBEncryption pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(pwhash), containerBytes, config);
 			byte[] encryptedContainer = pbEnc.encryptFile();
 
-			Socket socket = new Socket("localhost", 9000);
+			//Socket socket = new Socket("localhost", 9000);
+
+			Socket socket = createTLSSocket(serverAddress, port, tlsConfigPath);
 
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
@@ -478,5 +486,36 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		}
 		else
 			return "";
+	}
+
+	public static Socket createTLSSocket(String host, int port, String tlsConfigPath) throws IOException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, CertificateException, KeyManagementException {
+
+		TLSConfig tlsConfig = new TLSParser(tlsConfigPath).parseFile();
+		System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
+
+		KeyStore keystore = tlsConfig.getPrivkeystore();
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+		kmf.init(keystore, tlsConfig.getKeystorepw());
+
+		SSLContext sslContext = SSLContext.getInstance("TLS");
+		sslContext.init(kmf.getKeyManagers(), null, null);
+
+		SSLSocketFactory factory = sslContext.getSocketFactory();
+		SSLSocket sslSocket = (SSLSocket) factory.createSocket(host, port);
+
+		sslSocket.setEnabledProtocols(tlsConfig.getProtocols());
+		sslSocket.setEnabledCipherSuites(tlsConfig.getCiphersuites());
+
+		if (tlsConfig.getMode().equals("CLIENTE")) {
+			sslSocket.setUseClientMode(false);
+		}
+
+		try {
+			sslSocket.startHandshake();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return sslSocket;
 	}
 }

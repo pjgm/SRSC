@@ -1,17 +1,21 @@
 package project.servers;
 
 import project.config.PBEConfig;
+import project.config.TLSConfig;
 import project.containers.AuthContainer;
 import project.exceptions.AccessControlException;
 import project.exceptions.AuthenticationException;
+import project.exceptions.VersionNotAllowedException;
 import project.parsers.AccessControlParser;
 import project.parsers.AuthParser;
 import project.parsers.PBEConfigParser;
+import project.parsers.TLSParser;
 import project.pbe.PBEncryption;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -20,25 +24,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
 public class AuthServer {
 
-    public static void main(String args[]) throws IOException, ClassNotFoundException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeySpecException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, AuthenticationException, AccessControlException {
+    String allowedProtocolsArr[] = {"TLSv1.2"};
+    Set<String> allowedProtocols;
+    Map<String, byte[]> authorizedUsers;
+    Map<String, List<String>> accessControl;
+    Set<ByteBuffer> nonceSet;
 
-        int port = Integer.parseInt(args[0]);
-        ServerSocket listener = new ServerSocket(port);
+    public AuthServer(int port, String tlsConfigPath, String authUsersPath, String accessControlPath, String
+            cryptocfgPath) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, VersionNotAllowedException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException, NoSuchPaddingException, ClassNotFoundException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
 
-        String authcfgPath = args[1];
-        AuthParser authParser = new AuthParser(authcfgPath);
-        Map<String, byte[]> users = authParser.parseFile();
-
-        String accesscontrolcfgPath = args[2];
-        AccessControlParser acparser = new AccessControlParser(accesscontrolcfgPath);
-        Map<String, List<String>> ac = acparser.parseFile();
-
-        Set<ByteBuffer> nonceSet = new HashSet<>();
+        allowedProtocols = new HashSet<>();
+        nonceSet = new HashSet<>();
+        allowedProtocols.addAll(Arrays.asList(allowedProtocolsArr));
+        ServerSocket listener = createTLSServerSocket(tlsConfigPath, port);
+        this.authorizedUsers = loadAuthUsers(authUsersPath);
+        this.accessControl = loadAccessControl(accessControlPath);
 
         while (true) {
             Socket socket = listener.accept();
@@ -53,9 +59,9 @@ public class AuthServer {
             byte[] encryptedContainer = new byte[length];
             inputStream.read(encryptedContainer);
 
-            PBEConfigParser pbeConfigParser = new PBEConfigParser("src/project/cryptocfgfiles/" + multicastAddress + ".pbe");
+            PBEConfigParser pbeConfigParser = new PBEConfigParser(cryptocfgPath + multicastAddress + ".pbe");
             PBEConfig config = pbeConfigParser.parseFile();
-            String password = Base64.getEncoder().encodeToString(users.get(username));
+            String password = Base64.getEncoder().encodeToString(authorizedUsers.get(username));
             PBEncryption pbEnc = new PBEncryption(password, encryptedContainer, config);
 
             byte[] containerBytes;
@@ -78,8 +84,8 @@ public class AuthServer {
                 continue;
             }
 
-            boolean userExists = users.containsKey(container.getUsername());
-            boolean isPasswordCorrect = MessageDigest.isEqual(users.get(container.getUsername()), container.getPwHash());
+            boolean userExists = authorizedUsers.containsKey(container.getUsername());
+            boolean isPasswordCorrect = MessageDigest.isEqual(authorizedUsers.get(container.getUsername()), container.getPwHash());
 
             if (!userExists || !isPasswordCorrect) {
                 outputStream.writeInt(1);
@@ -87,7 +93,7 @@ public class AuthServer {
                 continue;
             }
 
-            boolean isAllowed = ac.get(container.getAddress()).contains(container.getUsername());
+            boolean isAllowed = accessControl.get(container.getAddress()).contains(container.getUsername());
 
             if (!isAllowed) {
                 outputStream.writeInt(2);
@@ -97,7 +103,7 @@ public class AuthServer {
 
             outputStream.writeInt(3);
 
-            Path path = Paths.get("src/project/cryptocfgfiles/" + multicastAddress + ".crypto");
+            Path path = Paths.get(cryptocfgPath + multicastAddress + ".crypto");
             byte[] data = Files.readAllBytes(path);
 
             pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(container.getPwHash()), data, config);
@@ -113,8 +119,54 @@ public class AuthServer {
             outputStream.close();
 
         }
+    }
+
+    private Map<String, byte[]> loadAuthUsers(String authUsersPath) throws IOException {
+        AuthParser authParser = new AuthParser(authUsersPath);
+        return authParser.parseFile();
+    }
 
 
+    private Map<String,List<String>> loadAccessControl(String accessControlPath) throws IOException {
+        AccessControlParser acparser = new AccessControlParser(accessControlPath);
+        return acparser.parseFile();
+    }
+
+    private ServerSocket createTLSServerSocket(String tlsConfigPath, int port) throws IOException,
+            CertificateException, NoSuchAlgorithmException, KeyStoreException, VersionNotAllowedException, UnrecoverableKeyException, KeyManagementException {
+
+        TLSConfig tlsConfig = new TLSParser(tlsConfigPath).parseFile();
+        System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
+
+        for (String v : tlsConfig.getProtocols()) {
+            if (!allowedProtocols.contains(v)) {
+                throw new VersionNotAllowedException("Bad config: " + v + " is not an allowed protocol");
+            }
+        }
+
+        KeyStore keystore = tlsConfig.getPrivkeystore();
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+        kmf.init(keystore, tlsConfig.getKeystorepw());
+
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(kmf.getKeyManagers(), null, null);
+        SSLServerSocketFactory socketFactory = sslContext.getServerSocketFactory();
+        SSLServerSocket serverSocket = (SSLServerSocket) socketFactory.createServerSocket(port);
+
+        serverSocket.setEnabledProtocols(tlsConfig.getProtocols());
+        serverSocket.setEnabledCipherSuites(tlsConfig.getCiphersuites());
+
+        if (tlsConfig.getMode().equals("CLIENTE-SERVIDOR")) {
+            serverSocket.setNeedClientAuth(true);
+        } else if (tlsConfig.getMode().equals("CLIENTE")) {
+            serverSocket.setUseClientMode(true);
+        }
+        
+        return serverSocket;
+    }
+
+    public static void main(String args[]) throws NoSuchPaddingException, InvalidKeySpecException, ClassNotFoundException, NoSuchAlgorithmException, KeyManagementException, CertificateException, UnrecoverableKeyException, BadPaddingException, VersionNotAllowedException, InvalidAlgorithmParameterException, KeyStoreException, IOException, IllegalBlockSizeException, InvalidKeyException {
+        new AuthServer(Integer.parseInt(args[0]), args[1], args[2], args[3], args[4]);
     }
 
 }

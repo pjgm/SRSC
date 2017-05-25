@@ -55,6 +55,7 @@ public class TestingServer {
 
         SSLSocket sslSocket = (SSLSocket) serverSocket.accept();
         printSocketInfo(sslSocket);
+
     }
 
     private static void printTLSConfig(TLSConfig tlsConfig) {
