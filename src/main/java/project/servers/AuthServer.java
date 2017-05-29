@@ -31,6 +31,9 @@ import java.util.*;
 
 public class AuthServer {
 
+    //TODO: Validacao certs tais como: verificacao de crl; handshake em java so verifica validade
+    //Escolher 1/2 atributos para verificar
+
     private String allowedProtocolsArr[] = {"TLSv1.2"};
     private Set<String> allowedProtocols;
     private Map<String, byte[]> authorizedUsers;

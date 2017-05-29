@@ -454,6 +454,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			byte[] nonceResp = Base64.getDecoder().decode(ois.readUTF());
 			byte[] myNonceResp = md.digest(nonce);
 
+			//TODO: remover nonces
 			if (!ByteBuffer.wrap(nonceResp).equals(ByteBuffer.wrap(myNonceResp))) {
 				throw new CorruptedMessageException("Server response hash doesn't match client's computed hash.");
 			}
