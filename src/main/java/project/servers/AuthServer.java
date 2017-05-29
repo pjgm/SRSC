@@ -3,8 +3,6 @@ package project.servers;
 import project.config.PBEConfig;
 import project.config.TLSConfig;
 import project.containers.AuthContainer;
-import project.exceptions.AccessControlException;
-import project.exceptions.AuthenticationException;
 import project.exceptions.VersionNotAllowedException;
 import project.parsers.AccessControlParser;
 import project.parsers.AuthParser;
@@ -15,7 +13,10 @@ import project.pbe.PBEncryption;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -30,11 +31,11 @@ import java.util.*;
 
 public class AuthServer {
 
-    String allowedProtocolsArr[] = {"TLSv1.2"};
-    Set<String> allowedProtocols;
-    Map<String, byte[]> authorizedUsers;
-    Map<String, List<String>> accessControl;
-    Set<ByteBuffer> nonceSet;
+    private String allowedProtocolsArr[] = {"TLSv1.2"};
+    private Set<String> allowedProtocols;
+    private Map<String, byte[]> authorizedUsers;
+    private Map<String, List<String>> accessControl;
+    private Set<ByteBuffer> nonceSet;
 
     public AuthServer(int port, String tlsConfigPath, String authUsersPath, String accessControlPath, String
             cryptocfgPath) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, VersionNotAllowedException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException, NoSuchPaddingException, ClassNotFoundException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
@@ -85,9 +86,8 @@ public class AuthServer {
             }
 
             boolean userExists = authorizedUsers.containsKey(container.getUsername());
-            boolean isPasswordCorrect = MessageDigest.isEqual(authorizedUsers.get(container.getUsername()), container.getPwHash());
 
-            if (!userExists || !isPasswordCorrect) {
+            if (!userExists) {
                 outputStream.writeInt(1);
                 outputStream.close();
                 continue;
@@ -106,7 +106,7 @@ public class AuthServer {
             Path path = Paths.get(cryptocfgPath + multicastAddress + ".crypto");
             byte[] data = Files.readAllBytes(path);
 
-            pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(container.getPwHash()), data, config);
+            pbEnc = new PBEncryption(password, data, config);
             byte[] encryptedCrypto = pbEnc.encryptFile();
 
             MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -136,7 +136,8 @@ public class AuthServer {
             CertificateException, NoSuchAlgorithmException, KeyStoreException, VersionNotAllowedException, UnrecoverableKeyException, KeyManagementException {
 
         TLSConfig tlsConfig = new TLSParser(tlsConfigPath).parseFile();
-        System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
+        System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore()); //TODO: usar apenas 1 CA para o
+        // client e server
 
         for (String v : tlsConfig.getProtocols()) {
             if (!allowedProtocols.contains(v)) {

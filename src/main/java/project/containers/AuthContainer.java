@@ -7,13 +7,11 @@ public class AuthContainer implements Serializable {
     private String username;
     private String address;
     private byte[] nonce;
-    private byte[] pwHash;
 
-    public AuthContainer(String username, String address, byte[] nonce, byte[] pwHash) {
+    public AuthContainer(String username, String address, byte[] nonce) {
         this.username = username;
         this.address = address;
         this.nonce = nonce;
-        this.pwHash = pwHash;
     }
 
     public String getUsername() {
@@ -26,9 +24,5 @@ public class AuthContainer implements Serializable {
 
     public byte[] getNonce() {
         return nonce;
-    }
-
-    public byte[] getPwHash() {
-        return pwHash;
     }
 }

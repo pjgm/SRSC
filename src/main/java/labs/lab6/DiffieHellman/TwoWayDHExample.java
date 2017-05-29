@@ -24,23 +24,15 @@ public class TwoWayDHExample
           + "44d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94b"
           + "f0573bf047a3aca98cdf3b", 16);
 
-    public static void main(
-        String[]    args)
-        throws Exception
-    {
+    public static void main(String[] args) throws Exception {
         DHParameterSpec dhParams = new DHParameterSpec(p512, g512);
 
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "BC");
-        // Parecido com a forma de utilizacao de cripto assimetrica mas
-	// com o parametro DH passado em vez de RSA
+        // Parecido com a forma de utilizacao de cripto assimetrica mas com o parametro DH passado em vez de RSA
 
         keyGen.initialize(dhParams, UtilsDH.createFixedRandom());
-        // take care about this. In this acse is just an example
-	// think about the consequences...
-       
-
+        // take care about this. In this case is just an example think about the consequences...
         // set up
-       
         // Simulation in A side
         KeyAgreement aKeyAgree = KeyAgreement.getInstance("DH", "BC");
         KeyPair      aPair = keyGen.generateKeyPair();
@@ -52,11 +44,8 @@ public class TwoWayDHExample
         KeyPair      bPair = keyGen.generateKeyPair();
 
         bKeyAgree.init(bPair.getPrivate());       
-       
-       
-        // two party agreement
-	// B receives the A public value and A receives the B Public value
 
+        // two party agreement B receives the A public value and A receives the B Public value
         // Then A generates
         aKeyAgree.doPhase(bPair.getPublic(), true);
 

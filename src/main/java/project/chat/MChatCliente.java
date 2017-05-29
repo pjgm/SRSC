@@ -14,7 +14,9 @@ import project.pbe.PBEncryption;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyAgreement;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.DHParameterSpec;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -32,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 import java.util.*;
 
 // Interface para a sessao de chat swing-based
@@ -50,7 +53,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 	protected MulticastChat chat;
 
 	// area de texto onde se mostram as mensagens das conversas ou a
-	// mensagem qdo alguem se junta ao chat
+	// mensagem qdo alguem se junta ao chat\
 	protected JTextArea textArea;
 
 	// Campo de texto onde se dara a entrada de mensagens
@@ -406,10 +409,8 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			byte[] pwhash = md.digest(password.getBytes());
 
-			AuthContainer container = new AuthContainer(username, multicastAddress, nonce, pwhash); //TODO: remover
-			// overhead (pwhash no container)
+			AuthContainer container = new AuthContainer(username, multicastAddress, nonce);
 
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutput oo = new ObjectOutputStream(bos);
@@ -420,6 +421,8 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			PBEConfigParser pbeConfigParser = new PBEConfigParser("src/main/java/project/cryptocfgfiles/" +
 					multicastAddress + ".pbe");
 			PBEConfig config = pbeConfigParser.parseFile();
+
+			byte[] pwhash = md.digest(password.getBytes());
 			PBEncryption pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(pwhash), containerBytes, config);
 			byte[] encryptedContainer = pbEnc.encryptFile();
 
@@ -517,5 +520,26 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		}
 
 		return sslSocket;
+	}
+
+	public static DHParameterSpec generateDHParams(int size) throws NoSuchAlgorithmException, InvalidParameterSpecException {
+		System.out.println("Generating DH parameters...");
+		AlgorithmParameterGenerator generator = AlgorithmParameterGenerator.getInstance("DH");
+		generator.init(size);
+		AlgorithmParameters params = generator.generateParameters();
+		System.out.println("Finished generation of DH parameters.");
+		return params.getParameterSpec(DHParameterSpec.class);
+	}
+
+	public static KeyPair generateDHKeyPair(DHParameterSpec params) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+		KeyPairGenerator aliceKpairGen = KeyPairGenerator.getInstance("DH");
+		aliceKpairGen.initialize(params);
+		return aliceKpairGen.generateKeyPair();
+	}
+
+	public KeyAgreement generateDHKeyAgree(KeyPair keypair) throws InvalidKeyException, NoSuchAlgorithmException {
+		KeyAgreement keyAgree = KeyAgreement.getInstance("DH");
+		keyAgree.init(keypair.getPrivate());
+		return keyAgree;
 	}
 }
