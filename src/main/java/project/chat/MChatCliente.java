@@ -401,16 +401,12 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		String password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
 
 
-		SecureRandom r = new SecureRandom();
-		byte[] nonce = new byte[128];
-		r.nextBytes(nonce);
-
 		GroupConfig cryptoconf = null;
 
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-512");
 
-			AuthContainer container = new AuthContainer(username, multicastAddress, nonce);
+			AuthContainer container = new AuthContainer(username, multicastAddress);
 
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutput oo = new ObjectOutputStream(bos);
@@ -451,13 +447,6 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 
 			byte[] iv = Base64.getDecoder().decode(ois.readUTF());
 			byte[] encryptedCrypto = Base64.getDecoder().decode(ois.readUTF());
-			byte[] nonceResp = Base64.getDecoder().decode(ois.readUTF());
-			byte[] myNonceResp = md.digest(nonce);
-
-			//TODO: remover nonces
-			if (!ByteBuffer.wrap(nonceResp).equals(ByteBuffer.wrap(myNonceResp))) {
-				throw new CorruptedMessageException("Server response hash doesn't match client's computed hash.");
-			}
 
 			pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(pwhash), encryptedCrypto, config);
 			byte[] cryptoFile = pbEnc.decryptFile(iv);
@@ -471,7 +460,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		} catch (NoSuchAlgorithmException | IllegalBlockSizeException | InvalidKeySpecException | BadPaddingException | NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException e) {
 			e.printStackTrace();
 			System.exit(1);
-		} catch (AuthenticationException | AccessControlException | CorruptedMessageException e) {
+		} catch (AuthenticationException | AccessControlException e) {
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}

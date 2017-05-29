@@ -83,11 +83,6 @@ public class AuthServer {
 
             AuthContainer container = (AuthContainer) oi.readObject();
 
-            if (nonceSet.contains(ByteBuffer.wrap(container.getNonce()))) {
-                System.err.println("Possible replaying attack. Ignoring message");
-                continue;
-            }
-
             boolean userExists = authorizedUsers.containsKey(container.getUsername());
 
             if (!userExists) {
@@ -112,12 +107,8 @@ public class AuthServer {
             pbEnc = new PBEncryption(password, data, config);
             byte[] encryptedCrypto = pbEnc.encryptFile();
 
-            MessageDigest md = MessageDigest.getInstance("SHA-512");
-            byte[] nonceHash = md.digest(container.getNonce());
-
             outputStream.writeUTF(Base64.getEncoder().encodeToString(pbEnc.getIv()));
             outputStream.writeUTF(Base64.getEncoder().encodeToString(encryptedCrypto));
-            outputStream.writeUTF(Base64.getEncoder().encodeToString(nonceHash));
 
             outputStream.close();
 

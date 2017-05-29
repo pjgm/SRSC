@@ -6,12 +6,10 @@ public class AuthContainer implements Serializable {
 
     private String username;
     private String address;
-    private byte[] nonce;
 
-    public AuthContainer(String username, String address, byte[] nonce) {
+    public AuthContainer(String username, String address) {
         this.username = username;
         this.address = address;
-        this.nonce = nonce;
     }
 
     public String getUsername() {
@@ -20,9 +18,5 @@ public class AuthContainer implements Serializable {
 
     public String getAddress() {
         return address;
-    }
-
-    public byte[] getNonce() {
-        return nonce;
     }
 }
