@@ -6,8 +6,8 @@ import project.config.GroupConfig;
 import project.config.PBEConfig;
 import project.config.TLSConfig;
 import project.containers.AuthContainer;
-import project.exceptions.*;
 import project.exceptions.AccessControlException;
+import project.exceptions.AuthenticationException;
 import project.parsers.GroupConfigParser;
 import project.parsers.PBEConfigParser;
 import project.parsers.TLSParser;
@@ -31,12 +31,13 @@ import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
-import java.util.*;
+import java.util.Base64;
+import java.util.Enumeration;
+import java.util.Iterator;
 
 // Interface para a sessao de chat swing-based
 // e pode ir sendo melhorada pelos alunos para acomodar as
@@ -384,6 +385,36 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 
 		GroupConfig groupConfig = serverHandshake(args[4], Integer.parseInt(args[5]), args[6], username, args[1]);
 
+
+		//TODO: Diffie Hellman here
+		//Create dh public nr
+		//Send nr
+		//Wait for response
+		//Calculate shared secret
+		//put in
+		// groupconfig
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		// ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+
+
+
+
 		try {
 			MChatCliente frame = new MChatCliente(groupConfig);
 			frame.setSize(800, 300);
@@ -519,24 +550,25 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		return sslSocket;
 	}
 
-//	public static DHParameterSpec generateDHParams(int size) throws NoSuchAlgorithmException, InvalidParameterSpecException {
-//		System.out.println("Generating DH parameters...");
-//		AlgorithmParameterGenerator generator = AlgorithmParameterGenerator.getInstance("DH");
-//		generator.init(size);
-//		AlgorithmParameters params = generator.generateParameters();
-//		System.out.println("Finished generation of DH parameters.");
-//		return params.getParameterSpec(DHParameterSpec.class);
-//	}
-//
-//	public static KeyPair generateDHKeyPair(DHParameterSpec params) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
-//		KeyPairGenerator aliceKpairGen = KeyPairGenerator.getInstance("DH");
-//		aliceKpairGen.initialize(params);
-//		return aliceKpairGen.generateKeyPair();
-//	}
-//
-//	public KeyAgreement generateDHKeyAgree(KeyPair keypair) throws InvalidKeyException, NoSuchAlgorithmException {
-//		KeyAgreement keyAgree = KeyAgreement.getInstance("DH");
-//		keyAgree.init(keypair.getPrivate());
-//		return keyAgree;
-//	}
+	public static DHParameterSpec generateDHParams(int size) throws NoSuchAlgorithmException, InvalidParameterSpecException {
+		System.out.println("Generating DH parameters...");
+		AlgorithmParameterGenerator generator = AlgorithmParameterGenerator.getInstance("DH");
+		generator.init(size);
+		AlgorithmParameters params = generator.generateParameters();
+		System.out.println("Finished generation of DH parameters.");
+		return params.getParameterSpec(DHParameterSpec.class);
+	}
+
+	public static KeyPair generateDHKeyPair(DHParameterSpec params) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+		KeyPairGenerator aliceKpairGen = KeyPairGenerator.getInstance("DH");
+		aliceKpairGen.initialize(params);
+		return aliceKpairGen.generateKeyPair();
+	}
+
+	public KeyAgreement generateDHKeyAgree(KeyPair keypair) throws InvalidKeyException, NoSuchAlgorithmException {
+		KeyAgreement keyAgree = KeyAgreement.getInstance("DH");
+		keyAgree.init(keypair.getPrivate());
+		return keyAgree;
+	}
+
 }
