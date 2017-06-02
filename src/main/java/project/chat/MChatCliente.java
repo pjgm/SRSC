@@ -398,7 +398,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		}
 	}
 
-	public static GroupConfig serverHandshake(String serverAddress, int port, String tlsConfigPath, String username, String multicastAddress) throws IOException, UnrecoverableKeyException, CertificateException, KeyStoreException, KeyManagementException {
+	private static GroupConfig serverHandshake(String serverAddress, int port, String tlsConfigPath, String username, String multicastAddress) throws IOException, UnrecoverableKeyException, CertificateException, KeyStoreException, KeyManagementException {
 		String password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
 		//String password = "hashedpw";//pwPrompt("Enter the password for "+username);//scanner.nextLine();
 
@@ -483,7 +483,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			return "";
 	}
 
-	public static Socket createTLSSocket(String host, int port, String tlsConfigPath) throws IOException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, CertificateException, KeyManagementException {
+	private static Socket createTLSSocket(String host, int port, String tlsConfigPath) throws IOException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, CertificateException, KeyManagementException {
 
 		TLSConfig tlsConfig = new TLSParser(tlsConfigPath).parseFile();
 		System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
