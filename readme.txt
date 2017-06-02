@@ -25,5 +25,4 @@ example:
 
 by:
 António Pacheco (41820) [a.pacheco@campus.fct.unl.pt]
-David Anglezi (51517) [david.anglezi@gmail.com]
 Paulo Martins (41982) [pj.martins@campus.fct.unl.pt]

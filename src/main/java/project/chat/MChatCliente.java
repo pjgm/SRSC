@@ -345,6 +345,8 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			System.exit(1);
 		}
 
+		//System.setProperty("javax.net.debug", "all");
+
 		String username = args[0];
 		InetAddress group = null;
 		int port = -1;
@@ -397,9 +399,8 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 	}
 
 	public static GroupConfig serverHandshake(String serverAddress, int port, String tlsConfigPath, String username, String multicastAddress) throws IOException, UnrecoverableKeyException, CertificateException, KeyStoreException, KeyManagementException {
-		Scanner scanner = new Scanner(System.in);
-		System.out.print("Please enter your password: ");
 		String password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
+		//String password = "hashedpw";//pwPrompt("Enter the password for "+username);//scanner.nextLine();
 
 
 		GroupConfig cryptoconf = null;
@@ -507,7 +508,10 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		}
 
 		try {
+			long startTime = System.nanoTime();
 			sslSocket.startHandshake();
+			long estimatedTime = System.nanoTime() - startTime;
+			System.out.println("Time to establing tls connection: " + (double)estimatedTime / 1000000000.0);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
