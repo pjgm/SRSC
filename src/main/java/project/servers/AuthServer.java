@@ -13,10 +13,7 @@ import project.pbe.PBEncryption;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -31,20 +28,17 @@ import java.util.*;
 
 public class AuthServer {
 
-    //TODO: Validacao certs tais como: verificacao de crl; handshake em java so verifica validade
-    //Escolher 1/2 atributos para verificar
-
     private String allowedProtocolsArr[] = {"TLSv1.2"};
     private Set<String> allowedProtocols;
     private Map<String, byte[]> authorizedUsers;
     private Map<String, List<String>> accessControl;
-    private Set<ByteBuffer> nonceSet;
 
     public AuthServer(int port, String tlsConfigPath, String authUsersPath, String accessControlPath, String
             cryptocfgPath) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, VersionNotAllowedException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException, NoSuchPaddingException, ClassNotFoundException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
 
+        //System.setProperty("javax.net.debug", "all"); // For debugging purposes
+
         allowedProtocols = new HashSet<>();
-        nonceSet = new HashSet<>();
         allowedProtocols.addAll(Arrays.asList(allowedProtocolsArr));
         ServerSocket listener = createTLSServerSocket(tlsConfigPath, port);
         this.authorizedUsers = loadAuthUsers(authUsersPath);
@@ -130,8 +124,7 @@ public class AuthServer {
             CertificateException, NoSuchAlgorithmException, KeyStoreException, VersionNotAllowedException, UnrecoverableKeyException, KeyManagementException {
 
         TLSConfig tlsConfig = new TLSParser(tlsConfigPath).parseFile();
-        System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore()); //TODO: usar apenas 1 CA para o
-        // client e server
+        System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
 
         for (String v : tlsConfig.getProtocols()) {
             if (!allowedProtocols.contains(v)) {
@@ -143,8 +136,9 @@ public class AuthServer {
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         kmf.init(keystore, tlsConfig.getKeystorepw());
 
+        project.cert_validation.TrustManager tm[] = new project.cert_validation.TrustManager[] {new project.cert_validation.TrustManager()};
         SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(kmf.getKeyManagers(), null, null);
+        sslContext.init(kmf.getKeyManagers(), tm, null);
         SSLServerSocketFactory socketFactory = sslContext.getServerSocketFactory();
         SSLServerSocket serverSocket = (SSLServerSocket) socketFactory.createServerSocket(port);
 

@@ -1,6 +1,7 @@
 package project.chat;// MChatCliente.java
 // 
 
+import project.cert_validation.TrustManager;
 import project.config.GroupConfig;
 import project.config.PBEConfig;
 import project.config.TLSConfig;
@@ -490,8 +491,10 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 		kmf.init(keystore, tlsConfig.getKeystorepw());
 
+		TrustManager tm[] = new TrustManager[]{new TrustManager()};
+
 		SSLContext sslContext = SSLContext.getInstance("TLS");
-		sslContext.init(kmf.getKeyManagers(), null, null);
+		sslContext.init(kmf.getKeyManagers(), tm, null);
 
 		SSLSocketFactory factory = sslContext.getSocketFactory();
 		SSLSocket sslSocket = (SSLSocket) factory.createSocket(host, port);
@@ -512,24 +515,24 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		return sslSocket;
 	}
 
-	public static DHParameterSpec generateDHParams(int size) throws NoSuchAlgorithmException, InvalidParameterSpecException {
-		System.out.println("Generating DH parameters...");
-		AlgorithmParameterGenerator generator = AlgorithmParameterGenerator.getInstance("DH");
-		generator.init(size);
-		AlgorithmParameters params = generator.generateParameters();
-		System.out.println("Finished generation of DH parameters.");
-		return params.getParameterSpec(DHParameterSpec.class);
-	}
-
-	public static KeyPair generateDHKeyPair(DHParameterSpec params) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
-		KeyPairGenerator aliceKpairGen = KeyPairGenerator.getInstance("DH");
-		aliceKpairGen.initialize(params);
-		return aliceKpairGen.generateKeyPair();
-	}
-
-	public KeyAgreement generateDHKeyAgree(KeyPair keypair) throws InvalidKeyException, NoSuchAlgorithmException {
-		KeyAgreement keyAgree = KeyAgreement.getInstance("DH");
-		keyAgree.init(keypair.getPrivate());
-		return keyAgree;
-	}
+//	public static DHParameterSpec generateDHParams(int size) throws NoSuchAlgorithmException, InvalidParameterSpecException {
+//		System.out.println("Generating DH parameters...");
+//		AlgorithmParameterGenerator generator = AlgorithmParameterGenerator.getInstance("DH");
+//		generator.init(size);
+//		AlgorithmParameters params = generator.generateParameters();
+//		System.out.println("Finished generation of DH parameters.");
+//		return params.getParameterSpec(DHParameterSpec.class);
+//	}
+//
+//	public static KeyPair generateDHKeyPair(DHParameterSpec params) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+//		KeyPairGenerator aliceKpairGen = KeyPairGenerator.getInstance("DH");
+//		aliceKpairGen.initialize(params);
+//		return aliceKpairGen.generateKeyPair();
+//	}
+//
+//	public KeyAgreement generateDHKeyAgree(KeyPair keypair) throws InvalidKeyException, NoSuchAlgorithmException {
+//		KeyAgreement keyAgree = KeyAgreement.getInstance("DH");
+//		keyAgree.init(keypair.getPrivate());
+//		return keyAgree;
+//	}
 }
