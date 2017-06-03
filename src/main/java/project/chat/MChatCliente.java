@@ -383,8 +383,10 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			}
 		}
 
-		GroupConfig groupConfig = serverHandshake(args[4], Integer.parseInt(args[5]), args[6], username, args[1]);
-
+		String password = "hashedpw";
+		//password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
+		long time = System.currentTimeMillis();
+		GroupConfig groupConfig = serverHandshake(args[4], Integer.parseInt(args[5]), args[6], username, args[1], password);
 
 		//TODO: Diffie Hellman here
 		//Create dh public nr
@@ -412,8 +414,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		//
 		// ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 
-
-
+		System.out.println("Sever handshake took "+(System.currentTimeMillis()-time)+" ms.");
 
 		try {
 			MChatCliente frame = new MChatCliente(groupConfig);
@@ -429,10 +430,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		}
 	}
 
-	private static GroupConfig serverHandshake(String serverAddress, int port, String tlsConfigPath, String username, String multicastAddress) throws IOException, UnrecoverableKeyException, CertificateException, KeyStoreException, KeyManagementException {
-		String password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
-		//String password = "hashedpw";//pwPrompt("Enter the password for "+username);//scanner.nextLine();
-
+	private static GroupConfig serverHandshake(String serverAddress, int port, String tlsConfigPath, String username, String multicastAddress, String password) throws IOException, UnrecoverableKeyException, CertificateException, KeyStoreException, KeyManagementException {
 
 		GroupConfig cryptoconf = null;
 
@@ -478,11 +476,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			else if (status == SUCCESS)
 				System.out.println("Authentication complete. You can now enter the chat.");
 
-			byte[] iv = Base64.getDecoder().decode(ois.readUTF());
-			byte[] encryptedCrypto = Base64.getDecoder().decode(ois.readUTF());
-
-			pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(pwhash), encryptedCrypto, config);
-			byte[] cryptoFile = pbEnc.decryptFile(iv);
+			byte[] cryptoFile = Base64.getDecoder().decode(ois.readUTF());
 
 			GroupConfigParser groupConfigParser = new GroupConfigParser(cryptoFile);
 			cryptoconf = groupConfigParser.parseFile();
@@ -501,6 +495,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		return cryptoconf;
 
 	}
+
 	public static String pwPrompt(String q){
 		JPasswordField pwfield = new JPasswordField();
 		int res = JOptionPane.showOptionDialog(null,
@@ -530,6 +525,9 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 
 		SSLSocketFactory factory = sslContext.getSocketFactory();
 		SSLSocket sslSocket = (SSLSocket) factory.createSocket(host, port);
+
+
+
 
 		sslSocket.setEnabledProtocols(tlsConfig.getProtocols());
 		sslSocket.setEnabledCipherSuites(tlsConfig.getCiphersuites());

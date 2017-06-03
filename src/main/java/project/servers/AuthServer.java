@@ -13,10 +13,8 @@ import project.pbe.PBEncryption;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.*;
+import javax.security.cert.X509Certificate;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -47,7 +45,10 @@ public class AuthServer {
         this.accessControl = loadAccessControl(accessControlPath);
 
         while (true) {
-            Socket socket = listener.accept();
+            SSLSocket socket = (SSLSocket) listener.accept();
+
+            X509Certificate c = socket.getSession().getPeerCertificateChain()[0];
+            System.out.println(">>issuer dn:"+c.getIssuerDN().getName()+" oid:"+c.getSubjectDN().getName());
 
             ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -100,11 +101,7 @@ public class AuthServer {
             Path path = Paths.get(cryptocfgPath + multicastAddress + ".crypto");
             byte[] data = Files.readAllBytes(path);
 
-            pbEnc = new PBEncryption(password, data, config);
-            byte[] encryptedCrypto = pbEnc.encryptFile();
-
-            outputStream.writeUTF(Base64.getEncoder().encodeToString(pbEnc.getIv()));
-            outputStream.writeUTF(Base64.getEncoder().encodeToString(encryptedCrypto));
+            outputStream.writeUTF(Base64.getEncoder().encodeToString(data));
 
             outputStream.close();
 
@@ -133,7 +130,29 @@ public class AuthServer {
                 throw new VersionNotAllowedException("Bad config: " + v + " is not an allowed protocol");
             }
         }
+/*
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        TrustManager[] otms = trustManagerFactory.getTrustManagers();
+        TrustManager[] tms = {new X509TrustManager() {
 
+            @Override
+            public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+        }};
+
+        TrustManager[] allTrustManagers = (TrustManager[])(Arrays.asList(otms, tms)).toArray();
+*/
         KeyStore keystore = tlsConfig.getPrivkeystore();
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         kmf.init(keystore, tlsConfig.getKeystorepw());
@@ -159,5 +178,6 @@ public class AuthServer {
     public static void main(String args[]) throws NoSuchPaddingException, InvalidKeySpecException, ClassNotFoundException, NoSuchAlgorithmException, KeyManagementException, CertificateException, UnrecoverableKeyException, BadPaddingException, VersionNotAllowedException, InvalidAlgorithmParameterException, KeyStoreException, IOException, IllegalBlockSizeException, InvalidKeyException {
         new AuthServer(Integer.parseInt(args[0]), args[1], args[2], args[3], args[4]);
     }
+
 
 }
