@@ -11,12 +11,14 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
 import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.InvalidParameterSpecException;
+import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -47,7 +49,27 @@ public class SecureMulticastSocket extends MulticastSocket {
 
     @Override
     public void send (DatagramPacket packet) {
+        encryptWithKeyAndSend(packet, ENCRYPTED_PAYLOAD);
+    }
+
+    public void sendWithKnownEncryption (DatagramPacket packet) {
+        encryptWithKeyAndSend(packet, PLAIN_PAYLOAD);
+    }
+
+    private void encryptWithKeyAndSend(DatagramPacket packet, int type){
         try {
+            SecretKeySpec key;
+            if(type == ENCRYPTED_PAYLOAD){
+                key = config.getSymmetricEphemeralKeyValue();
+                if(config.getSymmetricEphemeralKeyValue()==null) {
+                    //fallback to group key if no ephemeral key was negotiated
+                    key = config.getSymmetricKeyValue();
+                }else {
+                    key = config.getSymmetricEphemeralKeyValue();
+                }
+            }else{
+                key = config.getSymmetricKeyValue();
+            }
 
             byte[] input = packet.getData();
             byte[] nonce = generateNonce();
@@ -57,8 +79,7 @@ public class SecureMulticastSocket extends MulticastSocket {
             System.arraycopy(input, 0, plainText, 0, input.length);
             System.arraycopy(nonce, 0, plainText, input.length, nonce.length);
 
-
-            cipher.init(Cipher.ENCRYPT_MODE, config.getSymmetricKeyValue()); // IV is generated when one is needed
+            cipher.init(Cipher.ENCRYPT_MODE, key); // IV is generated when one is needed
 
             byte[] cipherText = cipher.doFinal(plainText);
 
@@ -70,7 +91,7 @@ public class SecureMulticastSocket extends MulticastSocket {
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.write(ENCRYPTED_PAYLOAD);
+            oos.write(type);
             oos.writeObject(container);
             oos.close();
 
@@ -81,8 +102,9 @@ public class SecureMulticastSocket extends MulticastSocket {
         catch (GeneralSecurityException | IOException e) {
             e.printStackTrace();
         }
-    }
 
+    }
+/*
     public void sendNoEncription(DatagramPacket packet) throws IOException {
         byte[] input = packet.getData();
         byte[] nonce = generateNonce();
@@ -103,11 +125,13 @@ public class SecureMulticastSocket extends MulticastSocket {
         packet.setData(baos.toByteArray());
         super.send(packet);
     }
-
+*/
     @Override
     public void receive (DatagramPacket packet) throws IOException {
         try {
             super.receive(packet);
+
+
 
             ByteArrayInputStream bin = new ByteArrayInputStream(packet.getData());
             ObjectInputStream ois = new ObjectInputStream(bin);
@@ -126,9 +150,10 @@ public class SecureMulticastSocket extends MulticastSocket {
 
             int ctLength = container.getPayloadSize();
 
+            SecretKeySpec packetKey = config.getSymmetricKeyValue();
             /* treat plain payload */
             if(type == PLAIN_PAYLOAD){
-                byte[] plainText = Arrays.copyOfRange(container.getPayload(), 0, ctLength);
+                /*byte[] plainText = Arrays.copyOfRange(container.getPayload(), 0, ctLength);
                 byte[] nonce = Arrays.copyOfRange(container.getPayload(), ctLength, container.getPayload().length);
 
                 //TODO: verify signature
@@ -139,7 +164,10 @@ public class SecureMulticastSocket extends MulticastSocket {
                 nonceSet.add(ByteBuffer.wrap(nonce));
 
                 packet.setData(plainText);
-                return;
+                return;*/
+            }else{
+                if(config.getSymmetricEphemeralKeyValue()!=null)
+                    packetKey = config.getSymmetricEphemeralKeyValue();
             }
 
 
@@ -152,9 +180,9 @@ public class SecureMulticastSocket extends MulticastSocket {
                 throw new CorruptedMessageException("Message was corrupted or tampered with");
 
             if (needsIV())
-                cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue(), new IvParameterSpec(container.getIv()));
+                cipher.init(Cipher.DECRYPT_MODE, packetKey, new IvParameterSpec(container.getIv()));
             else
-                cipher.init(Cipher.DECRYPT_MODE, config.getSymmetricKeyValue());
+                cipher.init(Cipher.DECRYPT_MODE, packetKey);
 
             byte[] combinedPlainText = cipher.doFinal(cipherText);
 

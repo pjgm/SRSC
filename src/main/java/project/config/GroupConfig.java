@@ -13,6 +13,7 @@ public class GroupConfig {
     private int macKeySize;
     private SecretKeySpec macKeyValue; //change type later
     private int nonceSize;
+    private SecretKeySpec ephemeralSymmetricKeyValue = null;
 
 
     public GroupConfig() {
@@ -57,6 +58,12 @@ public class GroupConfig {
 
     public SecretKeySpec getSymmetricKeyValue() {
         return symmetricKeyValue;
+    }
+    public SecretKeySpec getSymmetricEphemeralKeyValue() {
+        return ephemeralSymmetricKeyValue;
+    }
+    public void setSymmetricEphemeralKeyValue(SecretKeySpec k) {
+        ephemeralSymmetricKeyValue = k;
     }
 
     public void setSymmetricKeyValue(SecretKeySpec symmetricKeyValue) {

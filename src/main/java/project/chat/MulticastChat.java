@@ -27,6 +27,9 @@ public class MulticastChat extends Thread {
   // Identifica uma op. de processamento de uma key do DH //
   public static final int DHKEY = 4;
 
+  // Identifica uma op. de READY para o protocolo DH //
+  public static final int DHREADY = 5;
+
   // N. Magico que funciona como Id unico do Chat
   public static final long CHAT_MAGIC_NUMBER = 4969756929653643804L;
 
@@ -117,7 +120,7 @@ public class MulticastChat extends Thread {
 
     byte[] data = byteStream.toByteArray();
     DatagramPacket packet = new DatagramPacket(data, data.length, group, msocket.getLocalPort());
-    ((SecureMulticastSocket)msocket).sendNoEncription(packet);
+    ((SecureMulticastSocket)msocket).sendWithKnownEncryption(packet);
   }
 
   // Processamento de um JOIN ao grupo multicast com notificacao
@@ -134,11 +137,10 @@ public class MulticastChat extends Thread {
           //re broadcast my ID to new chat members
           //old members will ignore
           sendJoin();
-          recieveCurrentUsers();
-        }else{
-          recieveCurrentUsers();
         }
-
+        System.out.println(">> Updating user list.");
+        recieveCurrentUsers();
+        System.out.println(">> Updating user list. [  DONE  ]");
         negotiateKey();
       }
 
@@ -151,36 +153,37 @@ public class MulticastChat extends Thread {
   void recieveCurrentUsers() throws SocketException {
     byte[] buffer = new byte[65536];
     int oldTimeout = msocket.getSoTimeout();
-    msocket.setSoTimeout(300);
-    while(true){
-      try {
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-        msocket.receive(packet);
-        DataInputStream istream = new DataInputStream(new ByteArrayInputStream(packet.getData(), packet.getOffset(), packet.getLength()));
+    msocket.setSoTimeout(200);
+    try {
+      while (true) {
+        try {
+          DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+          msocket.receive(packet);
+          DataInputStream istream = new DataInputStream(new ByteArrayInputStream(packet.getData(), packet.getOffset(), packet.getLength()));
 
-        long magic = istream.readLong();
-        if (magic != CHAT_MAGIC_NUMBER) {
-          continue;
-        }
-        int opCode = istream.readInt();
-        switch (opCode) {
-          case JOIN:
-            String name = istream.readUTF();
-            users.add(name);
-            break;
-          default:
-            error("(Updating Users)Cod de operacao desconhecido " + opCode + " enviado de "
-                    + packet.getAddress() + ":" + packet.getPort());
-        }
+          long magic = istream.readLong();
+          if (magic != CHAT_MAGIC_NUMBER) {
+            continue;
+          }
+          int opCode = istream.readInt();
+          switch (opCode) {
+            case JOIN:
+              String name = istream.readUTF();
+              users.add(name);
+              break;
+            default:
+              error("(Updating Users)Cod de operacao desconhecido " + opCode + " enviado de "
+                      + packet.getAddress() + ":" + packet.getPort());
+          }
 
-      } catch (InterruptedIOException e) {
-        break;
-      } catch (Throwable e) {
-        e.printStackTrace();
-      }finally {
-        msocket.setSoTimeout(oldTimeout);
+        } catch (InterruptedIOException e) {
+          break;
+        } catch (Throwable e) {
+          e.printStackTrace();
+        }
       }
-
+    }finally {
+      msocket.setSoTimeout(oldTimeout);
     }
   }
 
@@ -208,6 +211,7 @@ public class MulticastChat extends Thread {
     try {
       users.remove(username);
       listener.chatParticipantLeft(username, address, port);
+      negotiateKey();
     } catch (Throwable e) {}
   }
 
@@ -262,7 +266,7 @@ public class MulticastChat extends Thread {
 
       byte[] pdata = byteStream.toByteArray();
       DatagramPacket packet = new DatagramPacket(pdata, pdata.length, group, msocket.getLocalPort());
-      socket.sendNoEncription(packet);
+      socket.sendWithKnownEncryption(packet);
     },()->{
 
       while (true){
@@ -291,12 +295,56 @@ public class MulticastChat extends Thread {
     }
     });
     try {
+      //make sure everyone is ready
+      if(negotiator.amMainUser()) {
+        Thread.sleep(250);
+        sendDHReady();
+      }else {
+        waitForDHReady();
+      }
+
       byte[] key = negotiator.negotiate(true);
 
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
+
+  private void sendDHReady(){
+    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+    DataOutputStream dataStream = new DataOutputStream(byteStream);
+    try {
+      dataStream.writeLong(CHAT_MAGIC_NUMBER);
+      dataStream.writeInt(DHREADY);
+      dataStream.close();
+
+      byte[] data = byteStream.toByteArray();
+      DatagramPacket packet = new DatagramPacket(data, data.length, group,
+              msocket.getLocalPort());
+      ((SecureMulticastSocket)msocket).sendWithKnownEncryption(packet);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+  private void waitForDHReady(){
+    try {
+      while (true) {
+        byte[] rdata = new byte[3000];
+        DatagramPacket packet = new DatagramPacket(rdata, rdata.length);
+        msocket.receive(packet);
+        DataInputStream istream = new DataInputStream(new ByteArrayInputStream(packet.getData(), packet.getOffset(), packet.getLength()));
+        long magic = istream.readLong();
+        if (magic != CHAT_MAGIC_NUMBER) {
+          continue;
+        }
+        int opCode = istream.readInt();
+        if (opCode == DHREADY)
+          break;
+      }
+    } catch (Exception e) {
+    }
+  }
+
 
   // Loops - recepcao e desmultiplexagem de datagramas de acordo com
   // as operacoes e mensagens
