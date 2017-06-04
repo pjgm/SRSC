@@ -277,7 +277,7 @@ public class MulticastChat extends Thread {
         DataInputStream istream = new DataInputStream(new ByteArrayInputStream(packet.getData(), packet.getOffset(), packet.getLength()));
 
         long magic = istream.readLong();
-        System.out.println("Received packet");
+        //System.out.println("Received packet");
         if (magic != CHAT_MAGIC_NUMBER) {
           continue;
         }
@@ -294,7 +294,7 @@ public class MulticastChat extends Thread {
             return data;
       }
     }
-    });
+    }, groupConfig.getDiffieHellmanG(), groupConfig.getDiffieHellmanP(), groupConfig.getDiffieHellmanSize());
     try {
       //make sure everyone is ready
       if(negotiator.amMainUser()) {

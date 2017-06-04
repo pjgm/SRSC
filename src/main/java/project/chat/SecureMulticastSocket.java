@@ -66,7 +66,7 @@ public class SecureMulticastSocket extends MulticastSocket {
                     key = config.getSymmetricKeyValue();
                 }else {
                     key = config.getSymmetricEphemeralKeyValue();
-                    System.out.println("----------------used ephemeral key");
+                    //System.out.println("----------------used ephemeral key");
                 }
             }else{
                 key = config.getSymmetricKeyValue();

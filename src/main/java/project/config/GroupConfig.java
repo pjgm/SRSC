@@ -1,6 +1,7 @@
 package project.config;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigInteger;
 
 public class GroupConfig {
 
@@ -15,6 +16,9 @@ public class GroupConfig {
     private int nonceSize;
     private SecretKeySpec ephemeralSymmetricKeyValue = null;
 
+    //Diffie-Hellman
+    private BigInteger dhG, dhP;
+    private int dhsize;
 
     public GroupConfig() {
 
@@ -103,4 +107,14 @@ public class GroupConfig {
     public void setNonceSize(int nonceSize) {
         this.nonceSize = nonceSize;
     }
+
+
+    public void setDiffieHellmanG(BigInteger g){this.dhG=g;}
+    public BigInteger getDiffieHellmanG(){return dhG;}
+
+    public void setDiffieHellmanP(BigInteger p){this.dhP=p;}
+    public BigInteger getDiffieHellmanP(){return dhP;}
+
+    public void setDiffieHellmanSize(int s){this.dhsize=s;}
+    public int getDiffieHellmanSize(){return dhsize;}
 }

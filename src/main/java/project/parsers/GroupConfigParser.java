@@ -4,6 +4,7 @@ import project.config.GroupConfig;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.math.BigInteger;
 
 public class GroupConfigParser {
 
@@ -58,6 +59,16 @@ public class GroupConfigParser {
                 break;
             case "noncesize":
                 parseNonceSize(value);
+                break;
+            case "dhp":
+                parseDHP(value);
+                break;
+            case "dhg":
+                parseDHG(value);
+                break;
+            case "dhsize":
+                parseDHSize(value);
+                break;
         }
     }
 
@@ -111,5 +122,15 @@ public class GroupConfigParser {
                     + Character.digit(s.charAt(i+1), 16));
         }
         return data;
+    }
+
+    private void parseDHG(String val){
+        config.setDiffieHellmanG(new BigInteger(val, 16));
+    }
+    private void parseDHP(String val){
+        config.setDiffieHellmanP(new BigInteger(val, 16));
+    }
+    private void parseDHSize(String val){
+        config.setDiffieHellmanSize(Integer.parseInt(val));
     }
 }
