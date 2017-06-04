@@ -6,7 +6,9 @@ package project.chat;
 import project.config.GroupConfig;
 
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.math.BigInteger;
 import java.net.*;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidParameterSpecException;
@@ -251,7 +253,6 @@ public class MulticastChat extends Thread {
     SecureMulticastSocket socket = (SecureMulticastSocket) msocket;
     List<String> ulist = new ArrayList<>(users);
     DHNNegotiator negotiator = new DHNNegotiator<String>(username, ulist, (data, usr)->{
-      //TODO:sign
       String to = (String) usr;
       ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
       DataOutputStream dataStream = new DataOutputStream(byteStream);
@@ -305,6 +306,15 @@ public class MulticastChat extends Thread {
 
       byte[] key = negotiator.negotiate(true);
 
+      int keySize = groupConfig.getSymmetricKeySize();
+
+      byte[] croppedKey = new byte[keySize];
+      System.arraycopy(key, 0, croppedKey, 0, (key.length>keySize)? keySize:key.length);
+
+      SecretKeySpec keySpec = new SecretKeySpec(croppedKey, groupConfig.getSymmetricAlgorithm());
+      groupConfig.setSymmetricEphemeralKeyValue(keySpec);
+      listener.chatMessageReceived("DH", InetAddress.getLocalHost(), 1,
+              "SET NEW KEY: "+javax.xml.bind.DatatypeConverter.printHexBinary(croppedKey));
     } catch (Exception e) {
       e.printStackTrace();
     }
