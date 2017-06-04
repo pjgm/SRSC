@@ -15,10 +15,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
 import java.nio.ByteBuffer;
-import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
 import java.security.spec.InvalidParameterSpecException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,6 +30,8 @@ public class SecureMulticastSocket extends MulticastSocket {
     private Set<ByteBuffer> nonceSet;
     private static final int VERSION = 1;
     private static final int LAYOUT = 1;
+    private static final byte ENCRYPTED_PAYLOAD = 100;
+    private static final byte PLAIN_PAYLOAD = 101;
     private Set<Integer> ALLOWED_VERSIONS;
 
     SecureMulticastSocket(int port, GroupConfig config) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidParameterSpecException {
@@ -44,6 +43,7 @@ public class SecureMulticastSocket extends MulticastSocket {
         ALLOWED_VERSIONS = new HashSet<>();
         ALLOWED_VERSIONS.add(1);
     }
+
 
     @Override
     public void send (DatagramPacket packet) {
@@ -70,7 +70,7 @@ public class SecureMulticastSocket extends MulticastSocket {
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
-
+            oos.write(ENCRYPTED_PAYLOAD);
             oos.writeObject(container);
             oos.close();
 
@@ -83,6 +83,27 @@ public class SecureMulticastSocket extends MulticastSocket {
         }
     }
 
+    public void sendNoEncription(DatagramPacket packet) throws IOException {
+        byte[] input = packet.getData();
+        byte[] nonce = generateNonce();
+
+        byte[] plainText = new byte[input.length + nonce.length];
+
+        System.arraycopy(input, 0, plainText, 0, input.length);
+        System.arraycopy(nonce, 0, plainText, input.length, nonce.length);
+
+        //TODO: sign
+        SecureContainer container = new SecureContainer(VERSION, LAYOUT, input.length, plainText,null, cipher.getIV());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.write(PLAIN_PAYLOAD);
+        oos.writeObject(container);
+        oos.close();
+
+        packet.setData(baos.toByteArray());
+        super.send(packet);
+    }
+
     @Override
     public void receive (DatagramPacket packet) throws IOException {
         try {
@@ -90,7 +111,7 @@ public class SecureMulticastSocket extends MulticastSocket {
 
             ByteArrayInputStream bin = new ByteArrayInputStream(packet.getData());
             ObjectInputStream ois = new ObjectInputStream(bin);
-
+            byte type = ois.readByte();
             SecureContainer container = (SecureContainer) ois.readObject();
             ois.close();
 
@@ -104,6 +125,24 @@ public class SecureMulticastSocket extends MulticastSocket {
                 throw new IncompatibleLayoutException("Current layout not compatible with received message");
 
             int ctLength = container.getPayloadSize();
+
+            /* treat plain payload */
+            if(type == PLAIN_PAYLOAD){
+                byte[] plainText = Arrays.copyOfRange(container.getPayload(), 0, ctLength);
+                byte[] nonce = Arrays.copyOfRange(container.getPayload(), ctLength, container.getPayload().length);
+
+                //TODO: verify signature
+
+                if (nonceSet.contains(ByteBuffer.wrap(nonce)))
+                    throw new DuplicateMessageException("Duplicate message. Possible replaying attack.");
+
+                nonceSet.add(ByteBuffer.wrap(nonce));
+
+                packet.setData(plainText);
+                return;
+            }
+
+
             byte[] cipherText = container.getPayload();
 
             mac.init(config.getMacKeyValue());

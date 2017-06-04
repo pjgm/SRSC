@@ -10,6 +10,7 @@ import java.io.*;
 import java.net.*;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidParameterSpecException;
+import java.util.*;
 
 public class MulticastChat extends Thread {
 
@@ -22,6 +23,9 @@ public class MulticastChat extends Thread {
 
   // Identifica uma op. de processamento de uma MENSAGEM normal //
   public static final int MESSAGE = 3;
+
+  // Identifica uma op. de processamento de uma key do DH //
+  public static final int DHKEY = 4;
 
   // N. Magico que funciona como Id unico do Chat
   public static final long CHAT_MAGIC_NUMBER = 4969756929653643804L;
@@ -37,6 +41,9 @@ public class MulticastChat extends Thread {
   // Username / User-Nick-Name do Chat
   protected String username;
 
+  // Users list -- Must keep track of all users for DH key negotiation
+  Set<String> users;
+
   // Grupo IP Multicast utilizado
   protected InetAddress group;
 
@@ -49,6 +56,8 @@ public class MulticastChat extends Thread {
 
   protected boolean isActive;
 
+  protected boolean inGroup = false;
+
   public MulticastChat(String username, InetAddress group, int port, int ttl, MulticastChatEventListener listener, GroupConfig groupConfig) throws IOException {
 
     this.username = username;
@@ -57,6 +66,7 @@ public class MulticastChat extends Thread {
     this.groupConfig = groupConfig;
     isActive = true;
 
+    users = new TreeSet<>();
 
     String path = group.getHostAddress().toString();
     // create & configure multicast socket
@@ -107,7 +117,7 @@ public class MulticastChat extends Thread {
 
     byte[] data = byteStream.toByteArray();
     DatagramPacket packet = new DatagramPacket(data, data.length, group, msocket.getLocalPort());
-    msocket.send(packet);
+    ((SecureMulticastSocket)msocket).sendNoEncription(packet);
   }
 
   // Processamento de um JOIN ao grupo multicast com notificacao
@@ -116,9 +126,61 @@ public class MulticastChat extends Thread {
     String name = istream.readUTF();
 
     try {
-      listener.chatParticipantJoined(name, address, port);
+      if(!users.contains(name)){
+        //new user wants to join
+        users.add(name);
+        listener.chatParticipantJoined(name, address, port);
+        if(inGroup){
+          //re broadcast my ID to new chat members
+          //old members will ignore
+          sendJoin();
+          recieveCurrentUsers();
+        }else{
+          recieveCurrentUsers();
+        }
+
+        negotiateKey();
+      }
+
     } catch (Throwable e) {
       e.printStackTrace();
+    }
+    inGroup = true;
+  }
+
+  void recieveCurrentUsers() throws SocketException {
+    byte[] buffer = new byte[65536];
+    int oldTimeout = msocket.getSoTimeout();
+    msocket.setSoTimeout(300);
+    while(true){
+      try {
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        msocket.receive(packet);
+        DataInputStream istream = new DataInputStream(new ByteArrayInputStream(packet.getData(), packet.getOffset(), packet.getLength()));
+
+        long magic = istream.readLong();
+        if (magic != CHAT_MAGIC_NUMBER) {
+          continue;
+        }
+        int opCode = istream.readInt();
+        switch (opCode) {
+          case JOIN:
+            String name = istream.readUTF();
+            users.add(name);
+            break;
+          default:
+            error("(Updating Users)Cod de operacao desconhecido " + opCode + " enviado de "
+                    + packet.getAddress() + ":" + packet.getPort());
+        }
+
+      } catch (InterruptedIOException e) {
+        break;
+      } catch (Throwable e) {
+        e.printStackTrace();
+      }finally {
+        msocket.setSoTimeout(oldTimeout);
+      }
+
     }
   }
 
@@ -144,6 +206,7 @@ public class MulticastChat extends Thread {
 
     String username = istream.readUTF();
     try {
+      users.remove(username);
       listener.chatParticipantLeft(username, address, port);
     } catch (Throwable e) {}
   }
@@ -178,6 +241,63 @@ public class MulticastChat extends Thread {
     } catch (Throwable e) {}
   }
 
+  protected void negotiateKey(){
+
+    System.out.println("Starting DH negotiation.");
+    SecureMulticastSocket socket = (SecureMulticastSocket) msocket;
+    List<String> ulist = new ArrayList<>(users);
+    DHNNegotiator negotiator = new DHNNegotiator<String>(username, ulist, (data, usr)->{
+      //TODO:sign
+      String to = (String) usr;
+      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+      DataOutputStream dataStream = new DataOutputStream(byteStream);
+
+      dataStream.writeLong(CHAT_MAGIC_NUMBER);
+      dataStream.writeInt(DHKEY);
+      dataStream.writeUTF(username);
+      dataStream.writeUTF(to);
+      dataStream.writeInt(data.length);
+      dataStream.write(data);
+      dataStream.close();
+
+      byte[] pdata = byteStream.toByteArray();
+      DatagramPacket packet = new DatagramPacket(pdata, pdata.length, group, msocket.getLocalPort());
+      socket.sendNoEncription(packet);
+    },()->{
+
+      while (true){
+        byte[] rdata = new byte[3000];
+        DatagramPacket packet = new DatagramPacket(rdata, rdata.length);
+        msocket.receive(packet);
+        DataInputStream istream = new DataInputStream(new ByteArrayInputStream(packet.getData(), packet.getOffset(), packet.getLength()));
+
+        long magic = istream.readLong();
+        System.out.println("Received packet");
+        if (magic != CHAT_MAGIC_NUMBER) {
+          continue;
+        }
+        int opCode = istream.readInt();
+        switch (opCode) {
+          case DHKEY:
+            String from = istream.readUTF();
+            String to = istream.readUTF();
+            if(!to.equals(username))
+              break;//this key is not for me
+            int dataLen = istream.readInt();
+            byte[] data = new byte[dataLen];
+            istream.read(data);
+            return data;
+      }
+    }
+    });
+    try {
+      byte[] key = negotiator.negotiate(true);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   // Loops - recepcao e desmultiplexagem de datagramas de acordo com
   // as operacoes e mensagens
   //
@@ -208,6 +328,9 @@ public class MulticastChat extends Thread {
           break;
         case MESSAGE:
           processMessage(istream, packet.getAddress(), packet.getPort());
+          break;
+        case DHKEY:
+          error("DH key negotiation received at the wrong time.");
           break;
         default:
           error("Cod de operacao desconhecido " + opCode + " enviado de "
