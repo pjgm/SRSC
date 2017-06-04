@@ -59,9 +59,11 @@ public class GroupConfig {
     public SecretKeySpec getSymmetricKeyValue() {
         return symmetricKeyValue;
     }
+
     public SecretKeySpec getSymmetricEphemeralKeyValue() {
         return ephemeralSymmetricKeyValue;
     }
+
     public void setSymmetricEphemeralKeyValue(SecretKeySpec k) {
         ephemeralSymmetricKeyValue = k;
     }
