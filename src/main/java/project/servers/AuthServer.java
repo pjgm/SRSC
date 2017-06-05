@@ -1,18 +1,17 @@
 package project.servers;
 
+import project.config.GroupConfig;
 import project.config.PBEConfig;
 import project.config.TLSConfig;
 import project.containers.AuthContainer;
 import project.exceptions.VersionNotAllowedException;
-import project.parsers.AccessControlParser;
-import project.parsers.AuthParser;
-import project.parsers.PBEConfigParser;
-import project.parsers.TLSParser;
+import project.parsers.*;
 import project.pbe.PBEncryption;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.DHParameterSpec;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
@@ -26,6 +25,7 @@ import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 import java.util.*;
 
 public class AuthServer {
@@ -35,8 +35,10 @@ public class AuthServer {
     private Map<String, byte[]> authorizedUsers;
     private Map<String, List<String>> accessControl;
 
+    String tlsConfigPath, authUsersPath, accessControlPath, cryptocfgPath;
+
     public AuthServer(int port, String tlsConfigPath, String authUsersPath, String accessControlPath, String
-            cryptocfgPath) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, VersionNotAllowedException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException, NoSuchPaddingException, ClassNotFoundException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+            cryptocfgPath) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, VersionNotAllowedException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException, NoSuchPaddingException, ClassNotFoundException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, InvalidParameterSpecException {
 
         //System.setProperty("javax.net.debug", "all"); // For debugging purposes
 
@@ -45,6 +47,11 @@ public class AuthServer {
         ServerSocket listener = createTLSServerSocket(tlsConfigPath, port);
         this.authorizedUsers = loadAuthUsers(authUsersPath);
         this.accessControl = loadAccessControl(accessControlPath);
+
+        this.tlsConfigPath = tlsConfigPath;
+        this.authUsersPath = authUsersPath;
+        this.accessControlPath = accessControlPath;
+        this.cryptocfgPath = cryptocfgPath;
 
         while (true) {
             Socket socket = listener.accept();
@@ -97,17 +104,39 @@ public class AuthServer {
 
             outputStream.writeInt(3);
 
-            Path path = Paths.get(cryptocfgPath + multicastAddress + ".crypto");
-            byte[] data = Files.readAllBytes(path);
+            //pbEnc = new PBEncryption(password, data, config);
+            //byte[] encryptedCrypto = pbEnc.encryptFile();
+            //outputStream.writeUTF(Base64.getEncoder().encodeToString(pbEnc.getIv()));
+            //outputStream.writeUTF(Base64.getEncoder().encodeToString(encryptedCrypto));
 
-            pbEnc = new PBEncryption(password, data, config);
-            byte[] encryptedCrypto = pbEnc.encryptFile();
-
-            outputStream.writeUTF(Base64.getEncoder().encodeToString(pbEnc.getIv()));
-            outputStream.writeUTF(Base64.getEncoder().encodeToString(encryptedCrypto));
+            //Path path = Paths.get(cryptocfgPath + multicastAddress + ".crypto");
+            //byte[] data = Files.readAllBytes(path);
+            //outputStream.writeUTF(Base64.getEncoder().encodeToString(data));
+            outputStream.writeObject(getGroupConfig(multicastAddress));
 
             outputStream.close();
 
+        }
+    }
+
+    Map<String, GroupConfig> configs = new HashMap<>();
+    private GroupConfig getGroupConfig(String group) throws IOException, InvalidParameterSpecException, NoSuchAlgorithmException {
+        if(configs.containsKey(group)){
+            return configs.get(group);
+        }else{
+            Path path = Paths.get(cryptocfgPath +"/"+ group + ".crypto");
+            byte[] data = Files.readAllBytes(path);
+            GroupConfigParser groupConfigParser = new GroupConfigParser(data);
+            GroupConfig cryptoconf = groupConfigParser.parseFile();
+            if(cryptoconf.getDiffieHellmanG()==null || cryptoconf.getDiffieHellmanP()==null)
+            {
+                DHParameterSpec newSpec = getAlternateDHParams(cryptoconf.getDiffieHellmanSize());
+                cryptoconf.setDiffieHellmanG(newSpec.getG());
+                cryptoconf.setDiffieHellmanP(newSpec.getP());
+                System.out.println("["+group+"] no DH parameters were found. New parameters were generated.");
+            }
+            configs.put(group, cryptoconf);
+            return cryptoconf;
         }
     }
 
@@ -156,7 +185,16 @@ public class AuthServer {
         return serverSocket;
     }
 
-    public static void main(String args[]) throws NoSuchPaddingException, InvalidKeySpecException, ClassNotFoundException, NoSuchAlgorithmException, KeyManagementException, CertificateException, UnrecoverableKeyException, BadPaddingException, VersionNotAllowedException, InvalidAlgorithmParameterException, KeyStoreException, IOException, IllegalBlockSizeException, InvalidKeyException {
+    public static DHParameterSpec getAlternateDHParams(int size) throws NoSuchAlgorithmException, InvalidParameterSpecException {
+        System.out.println("Generating DH parameters...");
+        AlgorithmParameterGenerator generator = AlgorithmParameterGenerator.getInstance("DH");
+        generator.init(size);
+        AlgorithmParameters params = generator.generateParameters();
+        System.out.println("Finished generation of DH parameters.");
+        return params.getParameterSpec(DHParameterSpec.class);
+    }
+
+    public static void main(String args[]) throws Exception{
         new AuthServer(Integer.parseInt(args[0]), args[1], args[2], args[3], args[4]);
     }
 

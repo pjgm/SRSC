@@ -1,9 +1,10 @@
 package project.config;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.io.Serializable;
 import java.math.BigInteger;
 
-public class GroupConfig {
+public class GroupConfig implements Serializable{
 
     private String symmetricAlgorithm;
     private String mode;
@@ -17,8 +18,8 @@ public class GroupConfig {
     private SecretKeySpec ephemeralSymmetricKeyValue = null;
 
     //Diffie-Hellman
-    private BigInteger dhG, dhP;
-    private int dhsize;
+    private BigInteger dhG = null, dhP = null;
+    private int dhsize = 512;
 
     public GroupConfig() {
 

@@ -478,14 +478,15 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			else if (status == SUCCESS)
 				System.out.println("Authentication complete. You can now enter the chat.");
 
-			byte[] iv = Base64.getDecoder().decode(ois.readUTF());
-			byte[] encryptedCrypto = Base64.getDecoder().decode(ois.readUTF());
+			//byte[] iv = Base64.getDecoder().decode(ois.readUTF());
+			//byte[] encryptedCrypto = Base64.getDecoder().decode(ois.readUTF());
 
-			pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(pwhash), encryptedCrypto, config);
-			byte[] cryptoFile = pbEnc.decryptFile(iv);
+			//pbEnc = new PBEncryption(Base64.getEncoder().encodeToString(pwhash), encryptedCrypto, config);
+			//byte[] cryptoFile = pbEnc.decryptFile(iv);
+			//byte[] cryptoFile = Base64.getDecoder().decode(ois.readUTF());
 
-			GroupConfigParser groupConfigParser = new GroupConfigParser(cryptoFile);
-			cryptoconf = groupConfigParser.parseFile();
+			//GroupConfigParser groupConfigParser = new GroupConfigParser(cryptoFile);
+			cryptoconf = (GroupConfig) ois.readObject();//groupConfigParser.parseFile();
 
 			ois.close();
 			oos.close();
@@ -496,6 +497,8 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		} catch (AuthenticationException | AccessControlException e) {
 			System.err.println(e.getMessage());
 			System.exit(1);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
 		}
 
 		return cryptoconf;
