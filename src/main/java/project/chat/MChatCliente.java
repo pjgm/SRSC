@@ -384,7 +384,7 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 		}
 
 		String password = "hashedpw";
-		//password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
+		password = pwPrompt("Enter the password for "+username);//scanner.nextLine();
 		long time = System.currentTimeMillis();
 		GroupConfig groupConfig = serverHandshake(args[4], Integer.parseInt(args[5]), args[6], username, args[1], password);
 
