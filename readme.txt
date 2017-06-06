@@ -16,9 +16,9 @@ example java -Djava.net.preferIPv4Stack=true project.chat.MChatCliente user1 224
 
 
 example:
-    java project.servers.AuthServer 9000 auth.cfg accesscontrol.cfg
+    java project.servers.AuthServer 9000 src/main/java/test/serverStore/tls.config src/main/java/project/servercfg/auth.cfg src/main/java/project/servercfg/accesscontrol.cfg src/main/java/project/cryptocfgfiles/
     [THEN]
-    example java -Djava.net.preferIPv4Stack=true project.chat.MChatCliente user1 224.0.0.2 9000
+    example java -Djava.net.preferIPv4Stack=true project.chat.MChatCliente USER 224.0.0.1 9000 1 localhost 9000 src/main/java/test/clientStore/tls.config
 
 
 (to set a password for a user use $echo -n PASSWORD | openssl dgst -binary -sha512 | openssl base64 and add it to the USER_PASSWORD_FILE)

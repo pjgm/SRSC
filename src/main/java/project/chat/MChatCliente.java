@@ -18,10 +18,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyAgreement;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.DHParameterSpec;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -35,9 +32,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
-import java.util.Base64;
-import java.util.Enumeration;
-import java.util.Iterator;
+import java.util.*;
 
 // Interface para a sessao de chat swing-based
 // e pode ir sendo melhorada pelos alunos para acomodar as
@@ -517,10 +512,33 @@ public class MChatCliente extends JFrame implements MulticastChatEventListener {
 			return "";
 	}
 
+	public static X509KeyManager getGlobalKeyMngr(){return keyManager;};
+	private static X509KeyManager keyManager = null;
+	public static javax.net.ssl.TrustManager[] getGlobalTrustMngr(){return trustManagers;};
+	private static javax.net.ssl.TrustManager[] trustManagers = null;
+	public static X509KeyManager setGlobalKeyMngr(TLSConfig tlsConfig) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+		KeyStore keystore = tlsConfig.getPrivkeystore();
+		Enumeration<String> cs = keystore.aliases();
+		while (cs.hasMoreElements()) System.out.println("Cert found: "+cs.nextElement());
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+		kmf.init(keystore, tlsConfig.getKeystorepw());
+		KeyManager[] kms =  kmf.getKeyManagers();
+		for(KeyManager keyManager:kms)if(keyManager instanceof X509KeyManager){
+			MChatCliente.keyManager = (X509KeyManager) keyManager;
+		}
+		TrustManagerFactory trustManagerFactory =
+				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+		trustManagerFactory.init(keystore);
+		trustManagers = trustManagerFactory.getTrustManagers();
+		return null;
+	}
+
 	private static Socket createTLSSocket(String host, int port, String tlsConfigPath) throws IOException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, CertificateException, KeyManagementException {
 
 		TLSConfig tlsConfig = new TLSParser(tlsConfigPath).parseFile();
 		System.setProperty("javax.net.ssl.trustStore", tlsConfig.getTruststore());
+
+		setGlobalKeyMngr(tlsConfig);
 
 		KeyStore keystore = tlsConfig.getPrivkeystore();
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");

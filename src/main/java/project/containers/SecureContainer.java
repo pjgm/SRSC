@@ -1,11 +1,17 @@
 package project.containers;
 
 import java.io.Serializable;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SecureContainer implements Serializable {
 
     private Header header;
     private Payload payload;
+    public byte[] signature = null;
+    public byte[] certificate = null;
+    public ArrayList<byte[]> chain = null;
 
     public SecureContainer(int version, int layout, int payloadSize, byte[] payload, byte[] mac, byte[] iv) {
         this.header = new Header(version, layout, payloadSize);

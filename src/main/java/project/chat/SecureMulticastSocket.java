@@ -12,13 +12,19 @@ import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
 import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -90,6 +96,32 @@ public class SecureMulticastSocket extends MulticastSocket {
             SecureContainer container = new SecureContainer(VERSION, LAYOUT, input.length, cipherText, macBytes,
                     cipher.getIV());
 
+            if(PLAIN_PAYLOAD==type){
+                X509KeyManager km =MChatCliente.getGlobalKeyMngr();
+                if(km!=null){
+                    String[] certs = km.getClientAliases("RSA", null);
+                    if (certs.length>0 && null!=km.getPrivateKey(certs[0])){
+                        PrivateKey privateKey = km.getPrivateKey(certs[0]);
+                        Signature signature = Signature.getInstance("SHA1withRSA", "BC");
+                        //System.out.println("-----------------signed payload");
+                        signature.initSign(privateKey);
+                        signature.update(cipherText);
+                        byte[] sig = signature.sign();
+                        container.signature = sig;
+                        X509Certificate[] chain = km.getCertificateChain(certs[0]);
+                        X509Certificate usedCert = chain[0];
+                        /*int i=0;
+                        container.chain = new ArrayList<>(chain.length);
+                        for(X509Certificate cert : chain){
+                            System.out.println(cert.getSubjectX500Principal().getName() +" : ");
+                            container.chain.add(cert.getEncoded());
+                        }*/
+                        container.certificate = usedCert.getEncoded();
+                    }
+                }
+            }
+
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.write(type);
@@ -101,6 +133,7 @@ public class SecureMulticastSocket extends MulticastSocket {
             super.send(packet);
         }
         catch (GeneralSecurityException | IOException e) {
+            System.err.println(e.getMessage());
             e.printStackTrace();
         }
 
@@ -154,6 +187,30 @@ public class SecureMulticastSocket extends MulticastSocket {
             SecretKeySpec packetKey = config.getSymmetricKeyValue();
             /* treat plain payload */
             if(type == PLAIN_PAYLOAD){
+                Signature signature = Signature.getInstance("SHA1withRSA", "BC");
+
+                CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+                InputStream in = new ByteArrayInputStream(container.certificate);
+                X509Certificate cert = (X509Certificate)certFactory.generateCertificate(in);
+
+                signature.initVerify(cert.getPublicKey());
+                signature.update(container.getPayload());
+
+                if(signature.verify(container.signature)) {
+                    System.out.println("--------------------------msg verified!!!!");
+                    TrustManager[] tms = MChatCliente.getGlobalTrustMngr();
+
+                    X509Certificate chain[] = {cert};
+                    for (TrustManager trustManager: tms) {
+                        if (trustManager instanceof X509TrustManager) {
+                            X509TrustManager x509TrustManager = (X509TrustManager)trustManager;
+                            x509TrustManager.checkClientTrusted(chain,"RSA");
+                        }
+                    }
+                }else{
+                    throw new CorruptedMessageException("Message was corrupted or tampered with");
+                }
+
                 /*byte[] plainText = Arrays.copyOfRange(container.getPayload(), 0, ctLength);
                 byte[] nonce = Arrays.copyOfRange(container.getPayload(), ctLength, container.getPayload().length);
 
