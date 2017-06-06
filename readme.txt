@@ -1,24 +1,17 @@
------Phase 1-----
-1. to run MChatCliente the following parameters must be defined: USERNAME MULTICAST_ADDRESS PORT [TTL]
-2. when the program starts for the first time the user is asked to define a password to encrypt the cypher keys.
-3. done. the user can now use the chat
-4. the .crypto file for that chat can now be deleted
-5. to start the chat client again the user needs to input the password he defined the first time the chat was opened
-6. with the correct password, the encrypted file with the chat keys is decrypted
-(use the -Djava.net.preferIPv4Stack=true flag)
+-----Phase 1 and 2-----
+1. First the AuthServer must be started with the parameters:
+    PORT TLS_CONFIG_FILE USER_PASSWORDS_FILE ACCESS_CONTROL_FILE KEYSTORE_AND_CONFIG_DIRECTORY
 
-example java -Djava.net.preferIPv4Stack=true project.chat.MChatCliente user1 224.0.0.2 9000
-
------Phase 2-----
-1. First the AuthServer must be started with the parameters: PORT USER_PASSWORD_FILE ACCESS_CONTROL_FILE
-
-2. repeat the same steps for the chat client as described in Phase 1
+2. Then run MChatCliente with the parameters:
+    USER GROUP GROUP_PORT TTL AUTH_SERVER_ADDRESS AUTH_SERVER_PORT TLS_CONFIG_FILE
 
 
 example:
     java project.servers.AuthServer 9000 src/main/java/test/serverStore/tls.config src/main/java/project/servercfg/auth.cfg src/main/java/project/servercfg/accesscontrol.cfg src/main/java/project/cryptocfgfiles/
+
     [THEN]
-    example java -Djava.net.preferIPv4Stack=true project.chat.MChatCliente USER 224.0.0.1 9000 1 localhost 9000 src/main/java/test/clientStore/tls.config
+
+    java -Djava.net.preferIPv4Stack=true project.chat.MChatCliente USER 224.0.0.1 9000 1 localhost 9000 src/main/java/test/clientStore/tls.config
 
 
 (to set a password for a user use $echo -n PASSWORD | openssl dgst -binary -sha512 | openssl base64 and add it to the USER_PASSWORD_FILE)
